@@ -1,29 +1,737 @@
--- CSGOLib — single-file loadstring bundle with demo UI
--- The library modules are embedded below and the showcase UI runs automatically.
--- Host this file at a raw HTTPS URL, then execute:
--- loadstring(game:HttpGet("YOUR_RAW_FILE_URL"))()
+-- CSGOLib Loadstring Bundle
+-- All 19 modules inlined, require() shimmed via source rewriting
+-- Dep order: topologically sorted (Theme -> Components -> Window -> init)
 --
--- Only run code you trust. The UI's ESP preview is a simulator; the example's
--- combat/movement entries are UI controls and do not implement game cheats.
+-- EXECUTOR USAGE:
+--   local CSGOLib = loadstring(game:HttpGet("YOUR_RAW_URL"))()
+--   local Window = CSGOLib:CreateWindow({ Title = "MyScript", ... })
 
-local __modules = {}
-local __cache = {}
+local _M = {}
 
-local function __require(name)
-    if __cache[name] ~= nil then
-        return __cache[name]
+-- [Theme]
+_M["Theme"] = (function()
+--[[
+    Theme.lua — CS:GO Classic Theme Configuration
+    Dark charcoal palette with muted orange/amber accents.
+    All visual constants for the entire UI library.
+]]
+
+local Theme = {}
+
+-- ── Color Palette ──────────────────────────────────────────────────────────
+Theme.Colors = {
+    -- Backgrounds
+    Background      = Color3.fromRGB(18, 18, 18),
+    Surface         = Color3.fromRGB(26, 26, 26),
+    SurfaceLight    = Color3.fromRGB(34, 34, 34),
+    SurfaceHover    = Color3.fromRGB(42, 42, 42),
+    SurfaceActive   = Color3.fromRGB(38, 38, 38),
+    Panel           = Color3.fromRGB(22, 22, 22),
+
+    -- Borders
+    Border          = Color3.fromRGB(48, 48, 48),
+    BorderLight     = Color3.fromRGB(58, 58, 58),
+    BorderDark      = Color3.fromRGB(35, 35, 35),
+
+    -- Accent (CS:GO orange/amber)
+    Accent          = Color3.fromRGB(220, 150, 40),
+    AccentDark      = Color3.fromRGB(175, 115, 25),
+    AccentHover     = Color3.fromRGB(240, 168, 48),
+    AccentDim       = Color3.fromRGB(120, 82, 22),
+
+    -- Text
+    Text            = Color3.fromRGB(205, 205, 205),
+    TextDim         = Color3.fromRGB(130, 130, 130),
+    TextDark        = Color3.fromRGB(85, 85, 85),
+    TextBright      = Color3.fromRGB(235, 235, 235),
+
+    -- Status
+    Success         = Color3.fromRGB(72, 175, 72),
+    Error           = Color3.fromRGB(195, 55, 55),
+    Warning         = Color3.fromRGB(210, 170, 35),
+    Info            = Color3.fromRGB(70, 140, 210),
+
+    -- ESP specific
+    Health          = Color3.fromRGB(75, 195, 75),
+    HealthLow       = Color3.fromRGB(195, 55, 55),
+    HealthMid       = Color3.fromRGB(210, 170, 35),
+    ESPBox          = Color3.fromRGB(220, 150, 40),
+    ESPSkeleton     = Color3.fromRGB(255, 255, 255),
+    ESPDistance      = Color3.fromRGB(160, 160, 160),
+
+    -- Misc
+    White           = Color3.fromRGB(255, 255, 255),
+    Black           = Color3.fromRGB(0, 0, 0),
+    Transparent     = Color3.fromRGB(0, 0, 0),
+    Scrollbar       = Color3.fromRGB(55, 55, 55),
+    ScrollbarHover  = Color3.fromRGB(75, 75, 75),
+}
+
+-- ── Typography ─────────────────────────────────────────────────────────────
+Theme.Font = {
+    Family      = Enum.Font.Code,
+    FamilyUI    = Enum.Font.SourceSans,
+    FamilyBold  = Enum.Font.SourceSansBold,
+    SizeTiny    = 10,
+    SizeSmall   = 11,
+    SizeNormal  = 12,
+    SizeMedium  = 13,
+    SizeLarge   = 14,
+    SizeTitle   = 16,
+    SizeHeader  = 18,
+}
+
+-- ── Spacing ────────────────────────────────────────────────────────────────
+Theme.Spacing = {
+    Tiny    = 2,
+    Small   = 4,
+    Normal  = 6,
+    Medium  = 8,
+    Large   = 12,
+    XLarge  = 16,
+    XXLarge = 24,
+}
+
+-- ── Sizes ──────────────────────────────────────────────────────────────────
+Theme.Sizes = {
+    -- Main window
+    WindowWidth     = 680,
+    WindowHeight    = 480,
+    SidebarWidth    = 120,
+    HeaderHeight    = 30,
+    FooterHeight    = 20,
+
+    -- Tabs
+    TabHeight       = 26,
+    TabIndicator    = 2,
+
+    -- Controls
+    ControlHeight   = 22,
+    ToggleWidth     = 28,
+    ToggleHeight    = 14,
+    SliderHeight    = 4,
+    SliderHandle    = 10,
+    ButtonHeight    = 24,
+    InputHeight     = 22,
+    DropdownHeight  = 22,
+    KeybindWidth    = 50,
+    KeybindHeight   = 18,
+
+    -- Borders
+    BorderThickness = 1,
+
+    -- Loader
+    LoaderWidth     = 340,
+    LoaderHeight    = 380,
+
+    -- ESP Preview
+    PreviewWidth    = 220,
+    PreviewHeight   = 280,
+
+    -- Scrollbar
+    ScrollbarWidth  = 4,
+
+    -- Notification
+    NotifWidth      = 260,
+    NotifHeight     = 36,
+
+    -- Color picker
+    ColorPickerSize = 150,
+    HueBarWidth     = 16,
+}
+
+-- ── Animation ──────────────────────────────────────────────────────────────
+Theme.Animation = {
+    Fast        = 0.1,
+    Normal      = 0.18,
+    Slow        = 0.3,
+    VerySlow    = 0.5,
+    EaseStyle   = Enum.EasingStyle.Quad,
+    EaseOut     = Enum.EasingDirection.Out,
+    EaseIn      = Enum.EasingDirection.In,
+    EaseInOut   = Enum.EasingDirection.InOut,
+}
+
+-- ── Corner Radius ──────────────────────────────────────────────────────────
+Theme.Corner = {
+    None    = UDim.new(0, 0),
+    Tiny    = UDim.new(0, 1),
+    Small   = UDim.new(0, 2),
+    Normal  = UDim.new(0, 3),
+}
+
+-- ── Utility: Create a themed instance ──────────────────────────────────────
+function Theme.Create(className: string, properties: {[string]: any}): Instance
+    local instance = Instance.new(className)
+    for prop, value in pairs(properties) do
+        if prop ~= "Parent" and prop ~= "Children" then
+            instance[prop] = value
+        end
     end
-    local factory = __modules[name]
-    assert(factory, "CSGOLib bundle: missing module '" .. tostring(name) .. "'")
-    local result = factory()
-    if result == nil then result = true end
-    __cache[name] = result
+    if properties.Children then
+        for _, child in ipairs(properties.Children) do
+            child.Parent = instance
+        end
+    end
+    if properties.Parent then
+        instance.Parent = properties.Parent
+    end
+    return instance
+end
+
+-- ── Utility: Apply border to a frame ───────────────────────────────────────
+function Theme.ApplyBorder(frame: Frame, color: Color3?)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or Theme.Colors.Border
+    stroke.Thickness = Theme.Sizes.BorderThickness
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = frame
+    return stroke
+end
+
+-- ── Utility: Apply corner radius ───────────────────────────────────────────
+function Theme.ApplyCorner(frame: Frame, radius: UDim?)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = radius or Theme.Corner.Tiny
+    corner.Parent = frame
+    return corner
+end
+
+-- ── Utility: Apply padding ─────────────────────────────────────────────────
+function Theme.ApplyPadding(frame: Frame, top: number?, bottom: number?, left: number?, right: number?)
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, top or 0)
+    padding.PaddingBottom = UDim.new(0, bottom or 0)
+    padding.PaddingLeft = UDim.new(0, left or 0)
+    padding.PaddingRight = UDim.new(0, right or 0)
+    padding.Parent = frame
+    return padding
+end
+
+-- ── Utility: Apply list layout ─────────────────────────────────────────────
+function Theme.ApplyListLayout(frame: Frame, padding: number?, direction: Enum.FillDirection?, hAlign: Enum.HorizontalAlignment?, vAlign: Enum.VerticalAlignment?)
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, padding or Theme.Spacing.Small)
+    layout.FillDirection = direction or Enum.FillDirection.Vertical
+    layout.HorizontalAlignment = hAlign or Enum.HorizontalAlignment.Left
+    layout.VerticalAlignment = vAlign or Enum.VerticalAlignment.Top
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = frame
+    return layout
+end
+
+return Theme
+
+end)()
+
+-- [Utils_Config]
+_M["Utils_Config"] = (function()
+--[[
+    Config.lua — Configuration save/load system.
+    Supports named configs with serialization to JSON.
+    Uses appropriate persistence for the target environment.
+]]
+
+local HttpService = game:GetService("HttpService")
+
+local Config = {}
+Config.__index = Config
+
+-- Storage backends
+local BACKENDS = {
+    FILE = "file",          -- writefile/readfile (executor environments)
+    DATASTORE = "datastore", -- DataStoreService (studio / server)
+    MEMORY = "memory",       -- In-memory only (fallback)
+}
+
+--- Detect available storage backend
+local function detectBackend(): string
+    -- Check for executor file functions
+    if typeof(writefile) == "function" and typeof(readfile) == "function" then
+        return BACKENDS.FILE
+    end
+    -- Check for DataStoreService access
+    local ok = pcall(function()
+        return game:GetService("DataStoreService")
+    end)
+    if ok then
+        return BACKENDS.DATASTORE
+    end
+    return BACKENDS.MEMORY
+end
+
+--- Create a new Config manager
+function Config.new(prefix: string?)
+    local self = setmetatable({}, Config)
+    self._prefix = prefix or "CSGOLib"
+    self._backend = detectBackend()
+    self._memoryStore = {}  -- fallback in-memory storage
+    self._defaults = {}     -- registered default values
+    self._values = {}       -- current values
+    self._callbacks = {}    -- change callbacks
+    return self
+end
+
+--- Register a default value for a key
+function Config:SetDefault(key: string, value: any)
+    self._defaults[key] = value
+    if self._values[key] == nil then
+        self._values[key] = value
+    end
+end
+
+--- Register multiple defaults
+function Config:SetDefaults(defaults: {[string]: any})
+    for key, value in pairs(defaults) do
+        self:SetDefault(key, value)
+    end
+end
+
+--- Get a config value
+function Config:Get(key: string): any
+    local value = self._values[key]
+    if value == nil then
+        return self._defaults[key]
+    end
+    return value
+end
+
+--- Set a config value
+function Config:Set(key: string, value: any)
+    local old = self._values[key]
+    self._values[key] = value
+    -- Fire callbacks
+    if self._callbacks[key] then
+        for _, cb in ipairs(self._callbacks[key]) do
+            task.spawn(cb, value, old)
+        end
+    end
+end
+
+--- Listen for value changes on a key
+function Config:OnChanged(key: string, callback: (new: any, old: any) -> ()): () -> ()
+    if not self._callbacks[key] then
+        self._callbacks[key] = {}
+    end
+    table.insert(self._callbacks[key], callback)
+
+    -- Return unsubscribe function
+    local idx = #self._callbacks[key]
+    return function()
+        table.remove(self._callbacks[key], idx)
+    end
+end
+
+--- Reset all values to defaults
+function Config:ResetDefaults()
+    for key, default in pairs(self._defaults) do
+        self:Set(key, default)
+    end
+end
+
+--- Get all current values as a serializable table
+function Config:GetAll(): {[string]: any}
+    local result = {}
+    for key, value in pairs(self._defaults) do
+        result[key] = self._values[key] ~= nil and self._values[key] or value
+    end
+    -- Include non-default keys too
+    for key, value in pairs(self._values) do
+        if result[key] == nil then
+            result[key] = value
+        end
+    end
     return result
 end
 
+--- Load values from a table (e.g., from deserialized JSON)
+function Config:LoadFromTable(data: {[string]: any})
+    if type(data) ~= "table" then return end
+    for key, value in pairs(data) do
+        -- Validate: only load keys that have registered defaults or already exist
+        if self._defaults[key] ~= nil or self._values[key] ~= nil then
+            -- Type check against default
+            local default = self._defaults[key]
+            if default == nil or typeof(value) == typeof(default) then
+                self:Set(key, value)
+            end
+        end
+    end
+end
 
--- ===== Embedded module: Components.Button =====
-__modules['Components.Button'] = function()
+--- Serialize Color3 values for JSON (Color3 isn't JSON-serializable)
+local function serializeValue(value: any): any
+    if typeof(value) == "Color3" then
+        return {__type = "Color3", r = math.floor(value.R * 255), g = math.floor(value.G * 255), b = math.floor(value.B * 255)}
+    elseif typeof(value) == "EnumItem" then
+        return {__type = "Enum", enum = tostring(value.EnumType), name = value.Name}
+    elseif type(value) == "table" then
+        local result = {}
+        for k, v in pairs(value) do
+            result[k] = serializeValue(v)
+        end
+        return result
+    end
+    return value
+end
+
+local function deserializeValue(value: any): any
+    if type(value) == "table" then
+        if value.__type == "Color3" then
+            return Color3.fromRGB(value.r, value.g, value.b)
+        elseif value.__type == "Enum" then
+            local ok, result = pcall(function()
+                return Enum[value.enum][value.name]
+            end)
+            return ok and result or nil
+        else
+            local result = {}
+            for k, v in pairs(value) do
+                result[k] = deserializeValue(v)
+            end
+            return result
+        end
+    end
+    return value
+end
+
+--- Get file path for a config name
+function Config:_getFilePath(name: string): string
+    return string.format("%s_%s.json", self._prefix, name)
+end
+
+--- Save current config to a named slot
+function Config:Save(name: string): (boolean, string?)
+    local data = {}
+    for key, value in pairs(self:GetAll()) do
+        data[key] = serializeValue(value)
+    end
+
+    local json = HttpService:JSONEncode(data)
+
+    if self._backend == BACKENDS.FILE then
+        local ok, err = pcall(function()
+            writefile(self:_getFilePath(name), json)
+        end)
+        if not ok then
+            return false, "Failed to save: " .. tostring(err)
+        end
+        return true, nil
+    elseif self._backend == BACKENDS.MEMORY then
+        self._memoryStore[name] = json
+        return true, nil
+    end
+
+    return false, "Unsupported backend"
+end
+
+--- Load a named config
+function Config:Load(name: string): (boolean, string?)
+    local json: string?
+
+    if self._backend == BACKENDS.FILE then
+        local ok, result = pcall(function()
+            return readfile(self:_getFilePath(name))
+        end)
+        if not ok then
+            return false, "Config not found: " .. tostring(name)
+        end
+        json = result
+    elseif self._backend == BACKENDS.MEMORY then
+        json = self._memoryStore[name]
+        if not json then
+            return false, "Config not found: " .. tostring(name)
+        end
+    else
+        return false, "Unsupported backend"
+    end
+
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(json)
+    end)
+    if not ok or type(data) ~= "table" then
+        return false, "Invalid config data"
+    end
+
+    -- Deserialize special types
+    for key, value in pairs(data) do
+        data[key] = deserializeValue(value)
+    end
+
+    self:LoadFromTable(data)
+    return true, nil
+end
+
+--- List available config names (file backend only)
+function Config:ListConfigs(): {string}
+    local configs = {}
+    if self._backend == BACKENDS.FILE then
+        local ok, files = pcall(function()
+            return listfiles and listfiles("") or {}
+        end)
+        if ok then
+            for _, file in ipairs(files) do
+                local match = string.match(file, self._prefix .. "_(.+)%.json$")
+                if match then
+                    table.insert(configs, match)
+                end
+            end
+        end
+    elseif self._backend == BACKENDS.MEMORY then
+        for name in pairs(self._memoryStore) do
+            table.insert(configs, name)
+        end
+    end
+    return configs
+end
+
+--- Delete a named config
+function Config:Delete(name: string): (boolean, string?)
+    if self._backend == BACKENDS.FILE then
+        local ok, err = pcall(function()
+            delfile(self:_getFilePath(name))
+        end)
+        return ok, err
+    elseif self._backend == BACKENDS.MEMORY then
+        self._memoryStore[name] = nil
+        return true, nil
+    end
+    return false, "Unsupported backend"
+end
+
+return Config
+
+end)()
+
+-- [Utils_Draggable]
+_M["Utils_Draggable"] = (function()
+--[[
+    Draggable.lua — Smooth window dragging utility.
+    Makes a frame draggable by its header without interfering with child controls.
+]]
+
+local UserInputService = game:GetService("UserInputService")
+
+local Draggable = {}
+
+--- Make a frame draggable via a designated handle region
+--- @param frame Frame — The frame to move
+--- @param handle GuiObject — The area that captures drag input (e.g., header bar)
+--- @return function — Call to disconnect and stop dragging
+function Draggable.Enable(frame: Frame, handle: GuiObject): () -> ()
+    local dragging = false
+    local dragStart: Vector3 = Vector3.zero
+    local startPos: UDim2 = frame.Position
+
+    local connections = {}
+
+    connections[1] = handle.InputBegan:Connect(function(input: InputObject)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    connections[2] = handle.InputEnded:Connect(function(input: InputObject)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    connections[3] = UserInputService.InputChanged:Connect(function(input: InputObject)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+                         input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- Return cleanup function
+    return function()
+        dragging = false
+        for _, conn in ipairs(connections) do
+            conn:Disconnect()
+        end
+    end
+end
+
+return Draggable
+
+end)()
+
+-- [Utils_Animation]
+_M["Utils_Animation"] = (function()
+--[[
+    Animation.lua — TweenService wrapper for consistent, restrained animations.
+    Provides short-hand tween creation with theme-aware defaults.
+]]
+
+local TweenService = game:GetService("TweenService")
+
+local Animation = {}
+
+-- Cache tween info objects to avoid repeated creation
+local _tweenInfoCache = {}
+
+--- Get or create a TweenInfo with the given parameters
+function Animation.GetTweenInfo(duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): TweenInfo
+    local d = duration or 0.18
+    local s = easeStyle or Enum.EasingStyle.Quad
+    local dir = easeDirection or Enum.EasingDirection.Out
+    local key = string.format("%s_%s_%s", tostring(d), tostring(s), tostring(dir))
+    if not _tweenInfoCache[key] then
+        _tweenInfoCache[key] = TweenInfo.new(d, s, dir)
+    end
+    return _tweenInfoCache[key]
+end
+
+--- Tween an instance's properties smoothly
+function Animation.Tween(instance: Instance, properties: {[string]: any}, duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): Tween
+    local info = Animation.GetTweenInfo(duration, easeStyle, easeDirection)
+    local tween = TweenService:Create(instance, info, properties)
+    tween:Play()
+    return tween
+end
+
+--- Fade in: animate BackgroundTransparency from 1 to target
+function Animation.FadeIn(instance: GuiObject, duration: number?, targetTransparency: number?): Tween
+    local target = targetTransparency or 0
+    instance.BackgroundTransparency = 1
+    return Animation.Tween(instance, {BackgroundTransparency = target}, duration or 0.3)
+end
+
+--- Fade out: animate BackgroundTransparency to 1
+function Animation.FadeOut(instance: GuiObject, duration: number?): Tween
+    return Animation.Tween(instance, {BackgroundTransparency = 1}, duration or 0.3)
+end
+
+--- Fade text/image transparency
+function Animation.FadeTextIn(instance: TextLabel | TextButton, duration: number?): Tween
+    instance.TextTransparency = 1
+    return Animation.Tween(instance, {TextTransparency = 0}, duration or 0.25)
+end
+
+function Animation.FadeTextOut(instance: TextLabel | TextButton, duration: number?): Tween
+    return Animation.Tween(instance, {TextTransparency = 1}, duration or 0.25)
+end
+
+--- Fade entire group (using GroupTransparency on a CanvasGroup or manual traversal)
+function Animation.FadeGroupIn(container: GuiObject, duration: number?): Tween?
+    if container:IsA("CanvasGroup") then
+        container.GroupTransparency = 1
+        return Animation.Tween(container, {GroupTransparency = 0}, duration or 0.35)
+    end
+    -- Fallback: fade individual children
+    for _, child in ipairs(container:GetDescendants()) do
+        if child:IsA("GuiObject") then
+            Animation.FadeIn(child, duration)
+        end
+    end
+    return nil
+end
+
+function Animation.FadeGroupOut(container: GuiObject, duration: number?): Tween?
+    if container:IsA("CanvasGroup") then
+        return Animation.Tween(container, {GroupTransparency = 1}, duration or 0.3)
+    end
+    for _, child in ipairs(container:GetDescendants()) do
+        if child:IsA("GuiObject") then
+            Animation.FadeOut(child, duration)
+        end
+    end
+    return nil
+end
+
+--- Slide in from offset
+function Animation.SlideIn(instance: GuiObject, fromOffset: UDim2, toPosition: UDim2, duration: number?): Tween
+    instance.Position = fromOffset
+    return Animation.Tween(instance, {Position = toPosition}, duration or 0.25)
+end
+
+--- Hover color effect
+function Animation.HoverColor(instance: GuiObject, hoverColor: Color3, normalColor: Color3, duration: number?)
+    local d = duration or 0.1
+    instance.MouseEnter:Connect(function()
+        Animation.Tween(instance, {BackgroundColor3 = hoverColor}, d)
+    end)
+    instance.MouseLeave:Connect(function()
+        Animation.Tween(instance, {BackgroundColor3 = normalColor}, d)
+    end)
+end
+
+--- Hover text color effect
+function Animation.HoverTextColor(instance: TextLabel | TextButton, hoverColor: Color3, normalColor: Color3, duration: number?)
+    local d = duration or 0.1
+    instance.MouseEnter:Connect(function()
+        Animation.Tween(instance, {TextColor3 = hoverColor}, d)
+    end)
+    instance.MouseLeave:Connect(function()
+        Animation.Tween(instance, {TextColor3 = normalColor}, d)
+    end)
+end
+
+--- Simple pulse (subtle size or transparency pulse)
+function Animation.Pulse(instance: GuiObject, property: string, valueA: any, valueB: any, duration: number?)
+    local d = duration or 0.5
+    local tweenA = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueA})
+    local tweenB = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueB})
+
+    local running = true
+    local connection
+
+    tweenA.Completed:Connect(function()
+        if running then tweenB:Play() end
+    end)
+    tweenB.Completed:Connect(function()
+        if running then tweenA:Play() end
+    end)
+    tweenA:Play()
+
+    -- Return a stop function
+    return function()
+        running = false
+        tweenA:Cancel()
+        tweenB:Cancel()
+    end
+end
+
+--- Loading spinner dots animation
+function Animation.LoadingDots(label: TextLabel, baseText: string, interval: number?)
+    local int = interval or 0.4
+    local dotCount = 0
+    local running = true
+
+    task.spawn(function()
+        while running do
+            dotCount = (dotCount % 3) + 1
+            label.Text = baseText .. string.rep(".", dotCount)
+            task.wait(int)
+        end
+    end)
+
+    return function()
+        running = false
+        label.Text = baseText
+    end
+end
+
+return Animation
+
+end)()
+
+-- [Components_Button]
+_M["Components_Button"] = (function()
 --[[
     Button.lua
     CS:GO-style rectangular button with thin border.
@@ -39,7 +747,7 @@ __modules['Components.Button'] = function()
 ]]
 
 local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Button = {}
 Button.__index = Button
@@ -179,10 +887,11 @@ function Button:Destroy()
 end
 
 return Button
-end
 
--- ===== Embedded module: Components.ColorPicker =====
-__modules['Components.ColorPicker'] = function()
+end)()
+
+-- [Components_ColorPicker]
+_M["Components_ColorPicker"] = (function()
 --[[
     ColorPicker.lua
     Compact color selector with SV canvas, hue bar, RGB/Hex inputs.
@@ -191,7 +900,7 @@ __modules['Components.ColorPicker'] = function()
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local ColorPicker = {}
 ColorPicker.__index = ColorPicker
@@ -792,17 +1501,18 @@ function ColorPicker:Destroy()
 end
 
 return ColorPicker
-end
 
--- ===== Embedded module: Components.Divider =====
-__modules['Components.Divider'] = function()
+end)()
+
+-- [Components_Divider]
+_M["Components_Divider"] = (function()
 --[[
     Divider.lua
     A simple thin horizontal divider line with optional vertical margin.
     Part of CSGOLib UI Library.
 ]]
 
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Divider = {}
 Divider.__index = Divider
@@ -851,10 +1561,11 @@ function Divider:Destroy()
 end
 
 return Divider
-end
 
--- ===== Embedded module: Components.Dropdown =====
-__modules['Components.Dropdown'] = function()
+end)()
+
+-- [Components_Dropdown]
+_M["Components_Dropdown"] = (function()
 --[[
     Dropdown.lua
     CS:GO-style compact dropdown selector with animated expand/collapse.
@@ -871,7 +1582,7 @@ __modules['Components.Dropdown'] = function()
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
@@ -1205,10 +1916,11 @@ function Dropdown:Destroy()
 end
 
 return Dropdown
-end
 
--- ===== Embedded module: Components.Keybind =====
-__modules['Components.Keybind'] = function()
+end)()
+
+-- [Components_Keybind]
+_M["Components_Keybind"] = (function()
 --[[
     Keybind.lua
     CS:GO-style keybind selector component.
@@ -1224,7 +1936,7 @@ __modules['Components.Keybind'] = function()
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Keybind = {}
 Keybind.__index = Keybind
@@ -1258,7 +1970,7 @@ local KEY_DISPLAY_NAMES: {[Enum.KeyCode]: string} = {
     [Enum.KeyCode.Equals] = "=",
     [Enum.KeyCode.LeftBracket] = "[",
     [Enum.KeyCode.RightBracket] = "]",
-    [Enum.KeyCode.BackSlash] = "\\",
+    [Enum.KeyCode.Backslash] = "\\",
     [Enum.KeyCode.Semicolon] = ";",
     [Enum.KeyCode.Quote] = "'",
     [Enum.KeyCode.Comma] = ",",
@@ -1450,10 +2162,11 @@ function Keybind:Destroy()
 end
 
 return Keybind
-end
 
--- ===== Embedded module: Components.Notification =====
-__modules['Components.Notification'] = function()
+end)()
+
+-- [Components_Notification]
+_M["Components_Notification"] = (function()
 --[[
     Notification.lua
     Toast notification system with slide-in animation and auto-dismiss.
@@ -1461,7 +2174,7 @@ __modules['Components.Notification'] = function()
 ]]
 
 local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local NotificationManager = {}
 NotificationManager.__index = NotificationManager
@@ -1657,10 +2370,11 @@ function NotificationManager:Destroy()
 end
 
 return NotificationManager
-end
 
--- ===== Embedded module: Components.SearchInput =====
-__modules['Components.SearchInput'] = function()
+end)()
+
+-- [Components_SearchInput]
+_M["Components_SearchInput"] = (function()
 --[[
     SearchInput.lua
     Search/filter text input with icon and clear button.
@@ -1668,7 +2382,7 @@ __modules['Components.SearchInput'] = function()
 ]]
 
 local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local SearchInput = {}
 SearchInput.__index = SearchInput
@@ -1826,260 +2540,11 @@ function SearchInput:Destroy()
 end
 
 return SearchInput
-end
 
--- ===== Embedded module: Components.Section =====
-__modules['Components.Section'] = function()
---[[
-    Section.lua
-    CS:GO-style collapsible section header with content frame.
-    Part of CSGOLib UI Library.
-]]
+end)()
 
-local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
-
--- Lazy-required control components
-local Toggle = __require("Components.Toggle")
-local Slider = __require("Components.Slider")
-local Button = __require("Components.Button")
-local Dropdown = __require("Components.Dropdown")
-local Keybind = __require("Components.Keybind")
-local TextInput = __require("Components.TextInput")
-local Divider = __require("Components.Divider")
-local ColorPicker = __require("Components.ColorPicker")
-local SearchInput = __require("Components.SearchInput")
-
-local Section = {}
-Section.__index = Section
-
-function Section.new(parent: Frame, config: any)
-    if type(config) == "string" then
-        config = { Name = config }
-    end
-    config = config or {}
-
-    local self = setmetatable({}, Section)
-
-    local collapsible: boolean = if config.Collapsible ~= nil then config.Collapsible else false
-    local isOpen: boolean = if config.DefaultOpen ~= nil then config.DefaultOpen else true
-
-    self._connections = {} :: { RBXScriptConnection }
-    self._components = {}
-    self._isOpen = isOpen
-
-    -- Root container
-    local root = Theme.Create("Frame", {
-        Name = "Section_" .. (config.Name or "Section"),
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundTransparency = 1,
-        Parent = parent,
-    })
-    self.Frame = root
-
-    -- Header row
-    local header = Theme.Create("Frame", {
-        Name = "Header",
-        Size = UDim2.new(1, 0, 0, 18),
-        BackgroundTransparency = 1,
-        Parent = root,
-    })
-
-    -- Toggle indicator (▾ / ▸)
-    local indicator: TextLabel? = nil
-    if collapsible then
-        indicator = Theme.Create("TextLabel", {
-            Name = "Indicator",
-            Size = UDim2.new(0, 12, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Text = if isOpen then "▾" else "▸",
-            TextColor3 = Theme.Colors.TextDim,
-            Font = Theme.Font.Family,
-            TextSize = Theme.Font.SizeSmall,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Center,
-            Parent = header,
-        })
-        self._indicator = indicator
-    end
-
-    -- Title label
-    local titleOffset = if collapsible then 12 else 0
-    local title = Theme.Create("TextLabel", {
-        Name = "Title",
-        Size = UDim2.new(1, -titleOffset, 1, 0),
-        Position = UDim2.new(0, titleOffset, 0, 0),
-        BackgroundTransparency = 1,
-        Text = string.upper(config.Name),
-        TextColor3 = Theme.Colors.TextDim,
-        Font = Theme.Font.Family,
-        TextSize = Theme.Font.SizeSmall,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        Parent = header,
-    })
-
-    -- Divider line below title
-    local divider = Theme.Create("Frame", {
-        Name = "Divider",
-        Size = UDim2.new(1, 0, 0, Theme.Sizes.BorderThickness),
-        BackgroundColor3 = Theme.Colors.Border,
-        BorderSizePixel = 0,
-        Parent = root,
-    })
-
-    -- Content frame for child controls
-    local content = Theme.Create("Frame", {
-        Name = "Content",
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundTransparency = 1,
-        ClipsDescendants = true,
-        Visible = isOpen,
-        Parent = root,
-    })
-    self.ContentFrame = content
-
-    -- List layout inside content
-    local listLayout = Theme.Create("UIListLayout", {
-        Name = "Layout",
-        Padding = UDim.new(0, Theme.Spacing.Small),
-        FillDirection = Enum.FillDirection.Vertical,
-        HorizontalAlignment = Enum.HorizontalAlignment.Left,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = content,
-    })
-
-    -- Root list layout to stack header, divider, content vertically
-    local rootLayout = Theme.Create("UIListLayout", {
-        Name = "RootLayout",
-        Padding = UDim.new(0, Theme.Spacing.Tiny),
-        FillDirection = Enum.FillDirection.Vertical,
-        HorizontalAlignment = Enum.HorizontalAlignment.Left,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = root,
-    })
-
-    -- Layout orders
-    header.LayoutOrder = 1
-    divider.LayoutOrder = 2
-    content.LayoutOrder = 3
-
-    -- Collapsible click handling
-    if collapsible then
-        local clickDetector = Theme.Create("TextButton", {
-            Name = "ClickDetector",
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Text = "",
-            Parent = header,
-        })
-
-        local conn = clickDetector.MouseButton1Click:Connect(function()
-            self:Toggle()
-        end)
-        table.insert(self._connections, conn)
-    end
-
-    return self
-end
-
-function Section:Toggle()
-    self._isOpen = not self._isOpen
-
-    if self._indicator then
-        self._indicator.Text = if self._isOpen then "▾" else "▸"
-    end
-
-    self.ContentFrame.Visible = self._isOpen
-end
-
-function Section:SetOpen(open: boolean)
-    if self._isOpen ~= open then
-        self:Toggle()
-    end
-end
-
-function Section:CreateToggle(config)
-    local toggle = Toggle.new(self.ContentFrame, config)
-    table.insert(self._components, toggle)
-    return toggle
-end
-
-function Section:CreateSlider(config)
-    local slider = Slider.new(self.ContentFrame, config)
-    table.insert(self._components, slider)
-    return slider
-end
-
-function Section:CreateButton(config)
-    local button = Button.new(self.ContentFrame, config)
-    table.insert(self._components, button)
-    return button
-end
-
-function Section:CreateDropdown(config)
-    local dropdown = Dropdown.new(self.ContentFrame, config)
-    table.insert(self._components, dropdown)
-    return dropdown
-end
-
-function Section:CreateKeybind(config)
-    local keybind = Keybind.new(self.ContentFrame, config)
-    table.insert(self._components, keybind)
-    return keybind
-end
-
-function Section:CreateTextInput(config)
-    local textInput = TextInput.new(self.ContentFrame, config)
-    table.insert(self._components, textInput)
-    return textInput
-end
-
-function Section:CreateDivider(config)
-    local divider = Divider.new(self.ContentFrame, config or {})
-    table.insert(self._components, divider)
-    return divider
-end
-
-function Section:CreateColorPicker(config)
-    local colorPicker = ColorPicker.new(self.ContentFrame, config)
-    table.insert(self._components, colorPicker)
-    return colorPicker
-end
-
-function Section:CreateSearchInput(config)
-    local searchInput = SearchInput.new(self.ContentFrame, config)
-    table.insert(self._components, searchInput)
-    return searchInput
-end
-
-function Section:Destroy()
-    for _, conn in self._connections do
-        conn:Disconnect()
-    end
-    self._connections = {}
-
-    for _, comp in self._components do
-        if comp and type(comp.Destroy) == "function" then
-            pcall(function() comp:Destroy() end)
-        end
-    end
-    self._components = {}
-
-    if self.Frame then
-        self.Frame:Destroy()
-        self.Frame = nil
-    end
-end
-
-return Section
-end
-
--- ===== Embedded module: Components.Slider =====
-__modules['Components.Slider'] = function()
+-- [Components_Slider]
+_M["Components_Slider"] = (function()
 --[[
     Slider.lua
     CS:GO-style horizontal slider with value display.
@@ -2099,7 +2564,7 @@ __modules['Components.Slider'] = function()
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Slider = {}
 Slider.__index = Slider
@@ -2346,10 +2811,11 @@ function Slider:Destroy()
 end
 
 return Slider
-end
 
--- ===== Embedded module: Components.TextInput =====
-__modules['Components.TextInput'] = function()
+end)()
+
+-- [Components_TextInput]
+_M["Components_TextInput"] = (function()
 --[[
     TextInput.lua
     CS:GO-style text input field with label and focus state.
@@ -2365,7 +2831,7 @@ __modules['Components.TextInput'] = function()
 ]]
 
 local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local TextInput = {}
 TextInput.__index = TextInput
@@ -2529,10 +2995,11 @@ function TextInput:Destroy()
 end
 
 return TextInput
-end
 
--- ===== Embedded module: Components.Toggle =====
-__modules['Components.Toggle'] = function()
+end)()
+
+-- [Components_Toggle]
+_M["Components_Toggle"] = (function()
 --[[
     Toggle.lua
     CS:GO-style compact rectangular toggle switch component.
@@ -2548,7 +3015,7 @@ __modules['Components.Toggle'] = function()
 ]]
 
 local TweenService = game:GetService("TweenService")
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 local Toggle = {}
 Toggle.__index = Toggle
@@ -2742,10 +3209,11 @@ function Toggle:Destroy()
 end
 
 return Toggle
-end
 
--- ===== Embedded module: ESPPreview =====
-__modules['ESPPreview'] = function()
+end)()
+
+-- [ESPPreview]
+_M["ESPPreview"] = (function()
 --[[
     ESPPreview.lua
     CS:GO-style ESP Preview Panel Component
@@ -2757,7 +3225,7 @@ __modules['ESPPreview'] = function()
     Part of CSGOLib UI Library.
 ]]
 
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 --------------------------------------------------------------------------------
 -- Constants
@@ -3359,216 +3827,11 @@ function ESPPreview:Destroy()
 end
 
 return ESPPreview
-end
 
--- ===== Embedded module: init =====
-__modules['init'] = function()
---[[
-    init.lua — CSGOLib Main Library Entry Point
-    
-    The top-level module that ties together the entire CS:GO-style
-    Roblox UI library. Handles ScreenGui creation, optional authentication
-    via the Loader, Window instantiation, Config management, and
-    Notification integration.
-    
-    Usage:
-        local CSGOLib = require(path.to.CSGOLib)
-        local window = CSGOLib:CreateWindow({
-            Title = "My Script",
-            Version = "v2.0.0",
-            ToggleKey = Enum.KeyCode.RightShift,
-            Authentication = {
-                Enabled = true,
-                Title = "My Script",
-                Version = "v2.0.0",
-                VerifyCallback = function(key) return true end,
-                GetKeyURL = "https://example.com/getkey",
-                TestMode = false,
-            },
-        })
-]]
+end)()
 
-local Players = game:GetService("Players")
-
-local Theme = __require("Theme")
-local Loader = __require("Loader")
-local Window = __require("Window")
-local Config = __require("Utils.Config")
-local Notification = __require("Components.Notification")
-
-local Library = {}
-
-function Library.__index(t, k)
-    local val = rawget(Library, k)
-    if val ~= nil then return val end
-    local window = rawget(t, "_window")
-    if window and window[k] then
-        if type(window[k]) == "function" then
-            return function(_, ...)
-                return window[k](window, ...)
-            end
-        end
-        return window[k]
-    end
-    return nil
-end
-
-function Library:CreateWindow(config)
-    config = config or {}
-    local self = setmetatable({}, Library)
-
-    self._title = config.Title or "CSGOLib"
-    self._version = config.Version or "v1.0.0"
-    self._toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
-    self._theme = config.Theme or "default"
-
-    self._screenGui = nil
-    self._window = nil
-    self._loader = nil
-    self._config = nil
-    self._notificationManager = nil
-
-    -- Create the ScreenGui
-    self._screenGui = Instance.new("ScreenGui")
-    self._screenGui.Name = "CSGOLib"
-    self._screenGui.ResetOnSpawn = false
-    self._screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    self._screenGui.IgnoreGuiInset = false
-    self._screenGui.DisplayOrder = 100
-
-    -- Parent to CoreGui if possible, otherwise PlayerGui
-    local ok = pcall(function()
-        self._screenGui.Parent = game:GetService("CoreGui")
-    end)
-    if not ok or not self._screenGui.Parent then
-        local player = Players.LocalPlayer
-        if player then
-            self._screenGui.Parent = player:WaitForChild("PlayerGui")
-        end
-    end
-
-    -- Create the Config manager
-    self._config = Config.new("CSGOLib")
-
-    -- Create the Notification manager
-    self._notificationManager = Notification.new(self._screenGui)
-
-    -- Create the Window structure immediately so tabs & controls can be attached
-    self:_createWindow()
-
-    -- Authentication flow
-    local authConfig = config.Authentication
-    if authConfig and authConfig.Enabled then
-        -- Hide window until authentication succeeds
-        if self._window and self._window._canvasGroup then
-            self._window._canvasGroup.Visible = false
-            self._window._visible = false
-        end
-        self:_startAuthFlow(authConfig)
-    else
-        if self._window then
-            self._window:Show()
-        end
-    end
-
-    return self
-end
-
-function Library:_startAuthFlow(authConfig)
-    local loaderConfig = {
-        Title = authConfig.Title or self._title,
-        Version = authConfig.Version or self._version,
-        VerifyCallback = authConfig.VerifyCallback,
-        GetKeyURL = authConfig.GetKeyURL,
-        TestMode = authConfig.TestMode or false,
-        OnSuccess = function()
-            -- Reveal main window
-            if self._window then
-                self._window:Show()
-            end
-            if self._notificationManager then
-                self._notificationManager:Notify({
-                    Message = "Authenticated successfully. Welcome!",
-                    Type = "success",
-                    Duration = 3,
-                })
-            end
-        end,
-    }
-
-    self._loader = Loader.new(loaderConfig)
-    self._loader:Show()
-end
-
-function Library:_createWindow()
-    self._window = Window.new(self._screenGui, {
-        Title = self._title,
-        Version = self._version,
-        ToggleKey = self._toggleKey,
-    })
-
-    -- Connect notification manager to window
-    self._window:SetNotificationManager(self._notificationManager)
-end
-
-function Library:CreateTab(...)
-    if not self._window then
-        self:_createWindow()
-    end
-    return self._window:CreateTab(...)
-end
-
-function Library:Notify(config)
-    if not self._notificationManager then return end
-    self._notificationManager:Notify({
-        Message = config.Message or "",
-        Type = config.Type or "info",
-        Duration = config.Duration or 3,
-    })
-end
-
-function Library:GetConfig()
-    return self._config
-end
-
-function Library:GetWindow()
-    return self._window
-end
-
-function Library:Destroy()
-    -- Destroy the window
-    if self._window then
-        self._window:Destroy()
-        self._window = nil
-    end
-
-    -- Destroy the loader
-    if self._loader then
-        self._loader:Destroy()
-        self._loader = nil
-    end
-
-    -- Destroy the notification manager
-    if self._notificationManager then
-        self._notificationManager:Destroy()
-        self._notificationManager = nil
-    end
-
-    -- Destroy the config (no persistent state to clean)
-    self._config = nil
-
-    -- Destroy the ScreenGui
-    if self._screenGui then
-        self._screenGui:Destroy()
-        self._screenGui = nil
-    end
-end
-
-return Library
-end
-
--- ===== Embedded module: Loader =====
-__modules['Loader'] = function()
+-- [Loader]
+_M["Loader"] = (function()
 --[[
     CSGOLib / Loader.lua
     ====================
@@ -3589,7 +3852,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
-local Theme = __require("Theme")
+local Theme = _M["Theme"]
 
 --------------------------------------------------------------------------------
 -- Helpers
@@ -4557,728 +4820,262 @@ function Loader:_submit()
 end
 
 return Loader
-end
 
--- ===== Embedded module: Theme =====
-__modules['Theme'] = function()
+end)()
+
+-- [Components_Section]
+_M["Components_Section"] = (function()
 --[[
-    Theme.lua — CS:GO Classic Theme Configuration
-    Dark charcoal palette with muted orange/amber accents.
-    All visual constants for the entire UI library.
-]]
-
-local Theme = {}
-
--- ── Color Palette ──────────────────────────────────────────────────────────
-Theme.Colors = {
-    -- Backgrounds
-    Background      = Color3.fromRGB(18, 18, 18),
-    Surface         = Color3.fromRGB(26, 26, 26),
-    SurfaceLight    = Color3.fromRGB(34, 34, 34),
-    SurfaceHover    = Color3.fromRGB(42, 42, 42),
-    SurfaceActive   = Color3.fromRGB(38, 38, 38),
-    Panel           = Color3.fromRGB(22, 22, 22),
-
-    -- Borders
-    Border          = Color3.fromRGB(48, 48, 48),
-    BorderLight     = Color3.fromRGB(58, 58, 58),
-    BorderDark      = Color3.fromRGB(35, 35, 35),
-
-    -- Accent (CS:GO orange/amber)
-    Accent          = Color3.fromRGB(220, 150, 40),
-    AccentDark      = Color3.fromRGB(175, 115, 25),
-    AccentHover     = Color3.fromRGB(240, 168, 48),
-    AccentDim       = Color3.fromRGB(120, 82, 22),
-
-    -- Text
-    Text            = Color3.fromRGB(205, 205, 205),
-    TextDim         = Color3.fromRGB(130, 130, 130),
-    TextDark        = Color3.fromRGB(85, 85, 85),
-    TextBright      = Color3.fromRGB(235, 235, 235),
-
-    -- Status
-    Success         = Color3.fromRGB(72, 175, 72),
-    Error           = Color3.fromRGB(195, 55, 55),
-    Warning         = Color3.fromRGB(210, 170, 35),
-    Info            = Color3.fromRGB(70, 140, 210),
-
-    -- ESP specific
-    Health          = Color3.fromRGB(75, 195, 75),
-    HealthLow       = Color3.fromRGB(195, 55, 55),
-    HealthMid       = Color3.fromRGB(210, 170, 35),
-    ESPBox          = Color3.fromRGB(220, 150, 40),
-    ESPSkeleton     = Color3.fromRGB(255, 255, 255),
-    ESPDistance      = Color3.fromRGB(160, 160, 160),
-
-    -- Misc
-    White           = Color3.fromRGB(255, 255, 255),
-    Black           = Color3.fromRGB(0, 0, 0),
-    Transparent     = Color3.fromRGB(0, 0, 0),
-    Scrollbar       = Color3.fromRGB(55, 55, 55),
-    ScrollbarHover  = Color3.fromRGB(75, 75, 75),
-}
-
--- ── Typography ─────────────────────────────────────────────────────────────
-Theme.Font = {
-    Family      = Enum.Font.Code,
-    FamilyUI    = Enum.Font.SourceSans,
-    FamilyBold  = Enum.Font.SourceSansBold,
-    SizeTiny    = 10,
-    SizeSmall   = 11,
-    SizeNormal  = 12,
-    SizeMedium  = 13,
-    SizeLarge   = 14,
-    SizeTitle   = 16,
-    SizeHeader  = 18,
-}
-
--- ── Spacing ────────────────────────────────────────────────────────────────
-Theme.Spacing = {
-    Tiny    = 2,
-    Small   = 4,
-    Normal  = 6,
-    Medium  = 8,
-    Large   = 12,
-    XLarge  = 16,
-    XXLarge = 24,
-}
-
--- ── Sizes ──────────────────────────────────────────────────────────────────
-Theme.Sizes = {
-    -- Main window
-    WindowWidth     = 680,
-    WindowHeight    = 480,
-    SidebarWidth    = 120,
-    HeaderHeight    = 30,
-    FooterHeight    = 20,
-
-    -- Tabs
-    TabHeight       = 26,
-    TabIndicator    = 2,
-
-    -- Controls
-    ControlHeight   = 22,
-    ToggleWidth     = 28,
-    ToggleHeight    = 14,
-    SliderHeight    = 4,
-    SliderHandle    = 10,
-    ButtonHeight    = 24,
-    InputHeight     = 22,
-    DropdownHeight  = 22,
-    KeybindWidth    = 50,
-    KeybindHeight   = 18,
-
-    -- Borders
-    BorderThickness = 1,
-
-    -- Loader
-    LoaderWidth     = 340,
-    LoaderHeight    = 380,
-
-    -- ESP Preview
-    PreviewWidth    = 220,
-    PreviewHeight   = 280,
-
-    -- Scrollbar
-    ScrollbarWidth  = 4,
-
-    -- Notification
-    NotifWidth      = 260,
-    NotifHeight     = 36,
-
-    -- Color picker
-    ColorPickerSize = 150,
-    HueBarWidth     = 16,
-}
-
--- ── Animation ──────────────────────────────────────────────────────────────
-Theme.Animation = {
-    Fast        = 0.1,
-    Normal      = 0.18,
-    Slow        = 0.3,
-    VerySlow    = 0.5,
-    EaseStyle   = Enum.EasingStyle.Quad,
-    EaseOut     = Enum.EasingDirection.Out,
-    EaseIn      = Enum.EasingDirection.In,
-    EaseInOut   = Enum.EasingDirection.InOut,
-}
-
--- ── Corner Radius ──────────────────────────────────────────────────────────
-Theme.Corner = {
-    None    = UDim.new(0, 0),
-    Tiny    = UDim.new(0, 1),
-    Small   = UDim.new(0, 2),
-    Normal  = UDim.new(0, 3),
-}
-
--- ── Utility: Create a themed instance ──────────────────────────────────────
-function Theme.Create(className: string, properties: {[string]: any}): Instance
-    local instance = Instance.new(className)
-    for prop, value in pairs(properties) do
-        if prop ~= "Parent" and prop ~= "Children" then
-            instance[prop] = value
-        end
-    end
-    if properties.Children then
-        for _, child in ipairs(properties.Children) do
-            child.Parent = instance
-        end
-    end
-    if properties.Parent then
-        instance.Parent = properties.Parent
-    end
-    return instance
-end
-
--- ── Utility: Apply border to a frame ───────────────────────────────────────
-function Theme.ApplyBorder(frame: Frame, color: Color3?)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = color or Theme.Colors.Border
-    stroke.Thickness = Theme.Sizes.BorderThickness
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent = frame
-    return stroke
-end
-
--- ── Utility: Apply corner radius ───────────────────────────────────────────
-function Theme.ApplyCorner(frame: Frame, radius: UDim?)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = radius or Theme.Corner.Tiny
-    corner.Parent = frame
-    return corner
-end
-
--- ── Utility: Apply padding ─────────────────────────────────────────────────
-function Theme.ApplyPadding(frame: Frame, top: number?, bottom: number?, left: number?, right: number?)
-    local padding = Instance.new("UIPadding")
-    padding.PaddingTop = UDim.new(0, top or 0)
-    padding.PaddingBottom = UDim.new(0, bottom or 0)
-    padding.PaddingLeft = UDim.new(0, left or 0)
-    padding.PaddingRight = UDim.new(0, right or 0)
-    padding.Parent = frame
-    return padding
-end
-
--- ── Utility: Apply list layout ─────────────────────────────────────────────
-function Theme.ApplyListLayout(frame: Frame, padding: number?, direction: Enum.FillDirection?, hAlign: Enum.HorizontalAlignment?, vAlign: Enum.VerticalAlignment?)
-    local layout = Instance.new("UIListLayout")
-    layout.Padding = UDim.new(0, padding or Theme.Spacing.Small)
-    layout.FillDirection = direction or Enum.FillDirection.Vertical
-    layout.HorizontalAlignment = hAlign or Enum.HorizontalAlignment.Left
-    layout.VerticalAlignment = vAlign or Enum.VerticalAlignment.Top
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Parent = frame
-    return layout
-end
-
-return Theme
-end
-
--- ===== Embedded module: Utils.Animation =====
-__modules['Utils.Animation'] = function()
---[[
-    Animation.lua — TweenService wrapper for consistent, restrained animations.
-    Provides short-hand tween creation with theme-aware defaults.
+    Section.lua
+    CS:GO-style collapsible section header with content frame.
+    Part of CSGOLib UI Library.
 ]]
 
 local TweenService = game:GetService("TweenService")
+local Theme = _M["Theme"]
 
-local Animation = {}
+-- Lazy-required control components
+local Toggle = _M["Components_Toggle"]
+local Slider = _M["Components_Slider"]
+local Button = _M["Components_Button"]
+local Dropdown = _M["Components_Dropdown"]
+local Keybind = _M["Components_Keybind"]
+local TextInput = _M["Components_TextInput"]
+local Divider = _M["Components_Divider"]
+local ColorPicker = _M["Components_ColorPicker"]
+local SearchInput = _M["Components_SearchInput"]
 
--- Cache tween info objects to avoid repeated creation
-local _tweenInfoCache = {}
+local Section = {}
+Section.__index = Section
 
---- Get or create a TweenInfo with the given parameters
-function Animation.GetTweenInfo(duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): TweenInfo
-    local d = duration or 0.18
-    local s = easeStyle or Enum.EasingStyle.Quad
-    local dir = easeDirection or Enum.EasingDirection.Out
-    local key = string.format("%s_%s_%s", tostring(d), tostring(s), tostring(dir))
-    if not _tweenInfoCache[key] then
-        _tweenInfoCache[key] = TweenInfo.new(d, s, dir)
+function Section.new(parent: Frame, config: any)
+    if type(config) == "string" then
+        config = { Name = config }
     end
-    return _tweenInfoCache[key]
-end
+    config = config or {}
 
---- Tween an instance's properties smoothly
-function Animation.Tween(instance: Instance, properties: {[string]: any}, duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): Tween
-    local info = Animation.GetTweenInfo(duration, easeStyle, easeDirection)
-    local tween = TweenService:Create(instance, info, properties)
-    tween:Play()
-    return tween
-end
+    local self = setmetatable({}, Section)
 
---- Fade in: animate BackgroundTransparency from 1 to target
-function Animation.FadeIn(instance: GuiObject, duration: number?, targetTransparency: number?): Tween
-    local target = targetTransparency or 0
-    instance.BackgroundTransparency = 1
-    return Animation.Tween(instance, {BackgroundTransparency = target}, duration or 0.3)
-end
+    local collapsible: boolean = if config.Collapsible ~= nil then config.Collapsible else false
+    local isOpen: boolean = if config.DefaultOpen ~= nil then config.DefaultOpen else true
 
---- Fade out: animate BackgroundTransparency to 1
-function Animation.FadeOut(instance: GuiObject, duration: number?): Tween
-    return Animation.Tween(instance, {BackgroundTransparency = 1}, duration or 0.3)
-end
+    self._connections = {} :: { RBXScriptConnection }
+    self._components = {}
+    self._isOpen = isOpen
 
---- Fade text/image transparency
-function Animation.FadeTextIn(instance: TextLabel | TextButton, duration: number?): Tween
-    instance.TextTransparency = 1
-    return Animation.Tween(instance, {TextTransparency = 0}, duration or 0.25)
-end
+    -- Root container
+    local root = Theme.Create("Frame", {
+        Name = "Section_" .. (config.Name or "Section"),
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        Parent = parent,
+    })
+    self.Frame = root
 
-function Animation.FadeTextOut(instance: TextLabel | TextButton, duration: number?): Tween
-    return Animation.Tween(instance, {TextTransparency = 1}, duration or 0.25)
-end
+    -- Header row
+    local header = Theme.Create("Frame", {
+        Name = "Header",
+        Size = UDim2.new(1, 0, 0, 18),
+        BackgroundTransparency = 1,
+        Parent = root,
+    })
 
---- Fade entire group (using GroupTransparency on a CanvasGroup or manual traversal)
-function Animation.FadeGroupIn(container: GuiObject, duration: number?): Tween?
-    if container:IsA("CanvasGroup") then
-        container.GroupTransparency = 1
-        return Animation.Tween(container, {GroupTransparency = 0}, duration or 0.35)
+    -- Toggle indicator (▾ / ▸)
+    local indicator: TextLabel? = nil
+    if collapsible then
+        indicator = Theme.Create("TextLabel", {
+            Name = "Indicator",
+            Size = UDim2.new(0, 12, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Text = if isOpen then "▾" else "▸",
+            TextColor3 = Theme.Colors.TextDim,
+            Font = Theme.Font.Family,
+            TextSize = Theme.Font.SizeSmall,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
+            Parent = header,
+        })
+        self._indicator = indicator
     end
-    -- Fallback: fade individual children
-    for _, child in ipairs(container:GetDescendants()) do
-        if child:IsA("GuiObject") then
-            Animation.FadeIn(child, duration)
-        end
+
+    -- Title label
+    local titleOffset = if collapsible then 12 else 0
+    local title = Theme.Create("TextLabel", {
+        Name = "Title",
+        Size = UDim2.new(1, -titleOffset, 1, 0),
+        Position = UDim2.new(0, titleOffset, 0, 0),
+        BackgroundTransparency = 1,
+        Text = string.upper(config.Name),
+        TextColor3 = Theme.Colors.TextDim,
+        Font = Theme.Font.Family,
+        TextSize = Theme.Font.SizeSmall,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        Parent = header,
+    })
+
+    -- Divider line below title
+    local divider = Theme.Create("Frame", {
+        Name = "Divider",
+        Size = UDim2.new(1, 0, 0, Theme.Sizes.BorderThickness),
+        BackgroundColor3 = Theme.Colors.Border,
+        BorderSizePixel = 0,
+        Parent = root,
+    })
+
+    -- Content frame for child controls
+    local content = Theme.Create("Frame", {
+        Name = "Content",
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        ClipsDescendants = true,
+        Visible = isOpen,
+        Parent = root,
+    })
+    self.ContentFrame = content
+
+    -- List layout inside content
+    local listLayout = Theme.Create("UIListLayout", {
+        Name = "Layout",
+        Padding = UDim.new(0, Theme.Spacing.Small),
+        FillDirection = Enum.FillDirection.Vertical,
+        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = content,
+    })
+
+    -- Root list layout to stack header, divider, content vertically
+    local rootLayout = Theme.Create("UIListLayout", {
+        Name = "RootLayout",
+        Padding = UDim.new(0, Theme.Spacing.Tiny),
+        FillDirection = Enum.FillDirection.Vertical,
+        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = root,
+    })
+
+    -- Layout orders
+    header.LayoutOrder = 1
+    divider.LayoutOrder = 2
+    content.LayoutOrder = 3
+
+    -- Collapsible click handling
+    if collapsible then
+        local clickDetector = Theme.Create("TextButton", {
+            Name = "ClickDetector",
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = header,
+        })
+
+        local conn = clickDetector.MouseButton1Click:Connect(function()
+            self:Toggle()
+        end)
+        table.insert(self._connections, conn)
     end
-    return nil
-end
 
-function Animation.FadeGroupOut(container: GuiObject, duration: number?): Tween?
-    if container:IsA("CanvasGroup") then
-        return Animation.Tween(container, {GroupTransparency = 1}, duration or 0.3)
-    end
-    for _, child in ipairs(container:GetDescendants()) do
-        if child:IsA("GuiObject") then
-            Animation.FadeOut(child, duration)
-        end
-    end
-    return nil
-end
-
---- Slide in from offset
-function Animation.SlideIn(instance: GuiObject, fromOffset: UDim2, toPosition: UDim2, duration: number?): Tween
-    instance.Position = fromOffset
-    return Animation.Tween(instance, {Position = toPosition}, duration or 0.25)
-end
-
---- Hover color effect
-function Animation.HoverColor(instance: GuiObject, hoverColor: Color3, normalColor: Color3, duration: number?)
-    local d = duration or 0.1
-    instance.MouseEnter:Connect(function()
-        Animation.Tween(instance, {BackgroundColor3 = hoverColor}, d)
-    end)
-    instance.MouseLeave:Connect(function()
-        Animation.Tween(instance, {BackgroundColor3 = normalColor}, d)
-    end)
-end
-
---- Hover text color effect
-function Animation.HoverTextColor(instance: TextLabel | TextButton, hoverColor: Color3, normalColor: Color3, duration: number?)
-    local d = duration or 0.1
-    instance.MouseEnter:Connect(function()
-        Animation.Tween(instance, {TextColor3 = hoverColor}, d)
-    end)
-    instance.MouseLeave:Connect(function()
-        Animation.Tween(instance, {TextColor3 = normalColor}, d)
-    end)
-end
-
---- Simple pulse (subtle size or transparency pulse)
-function Animation.Pulse(instance: GuiObject, property: string, valueA: any, valueB: any, duration: number?)
-    local d = duration or 0.5
-    local tweenA = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueA})
-    local tweenB = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueB})
-
-    local running = true
-    local connection
-
-    tweenA.Completed:Connect(function()
-        if running then tweenB:Play() end
-    end)
-    tweenB.Completed:Connect(function()
-        if running then tweenA:Play() end
-    end)
-    tweenA:Play()
-
-    -- Return a stop function
-    return function()
-        running = false
-        tweenA:Cancel()
-        tweenB:Cancel()
-    end
-end
-
---- Loading spinner dots animation
-function Animation.LoadingDots(label: TextLabel, baseText: string, interval: number?)
-    local int = interval or 0.4
-    local dotCount = 0
-    local running = true
-
-    task.spawn(function()
-        while running do
-            dotCount = (dotCount % 3) + 1
-            label.Text = baseText .. string.rep(".", dotCount)
-            task.wait(int)
-        end
-    end)
-
-    return function()
-        running = false
-        label.Text = baseText
-    end
-end
-
-return Animation
-end
-
--- ===== Embedded module: Utils.Config =====
-__modules['Utils.Config'] = function()
---[[
-    Config.lua — Configuration save/load system.
-    Supports named configs with serialization to JSON.
-    Uses appropriate persistence for the target environment.
-]]
-
-local HttpService = game:GetService("HttpService")
-
-local Config = {}
-Config.__index = Config
-
--- Storage backends
-local BACKENDS = {
-    FILE = "file",          -- writefile/readfile (executor environments)
-    DATASTORE = "datastore", -- DataStoreService (studio / server)
-    MEMORY = "memory",       -- In-memory only (fallback)
-}
-
---- Detect available storage backend
-local function detectBackend(): string
-    -- Check for executor file functions
-    if typeof(writefile) == "function" and typeof(readfile) == "function" then
-        return BACKENDS.FILE
-    end
-    -- Check for DataStoreService access
-    local ok = pcall(function()
-        return game:GetService("DataStoreService")
-    end)
-    if ok then
-        return BACKENDS.DATASTORE
-    end
-    return BACKENDS.MEMORY
-end
-
---- Create a new Config manager
-function Config.new(prefix: string?)
-    local self = setmetatable({}, Config)
-    self._prefix = prefix or "CSGOLib"
-    self._backend = detectBackend()
-    self._memoryStore = {}  -- fallback in-memory storage
-    self._defaults = {}     -- registered default values
-    self._values = {}       -- current values
-    self._callbacks = {}    -- change callbacks
     return self
 end
 
---- Register a default value for a key
-function Config:SetDefault(key: string, value: any)
-    self._defaults[key] = value
-    if self._values[key] == nil then
-        self._values[key] = value
+function Section:Toggle()
+    self._isOpen = not self._isOpen
+
+    if self._indicator then
+        self._indicator.Text = if self._isOpen then "▾" else "▸"
+    end
+
+    self.ContentFrame.Visible = self._isOpen
+end
+
+function Section:SetOpen(open: boolean)
+    if self._isOpen ~= open then
+        self:Toggle()
     end
 end
 
---- Register multiple defaults
-function Config:SetDefaults(defaults: {[string]: any})
-    for key, value in pairs(defaults) do
-        self:SetDefault(key, value)
-    end
+function Section:CreateToggle(config)
+    local toggle = Toggle.new(self.ContentFrame, config)
+    table.insert(self._components, toggle)
+    return toggle
 end
 
---- Get a config value
-function Config:Get(key: string): any
-    local value = self._values[key]
-    if value == nil then
-        return self._defaults[key]
-    end
-    return value
+function Section:CreateSlider(config)
+    local slider = Slider.new(self.ContentFrame, config)
+    table.insert(self._components, slider)
+    return slider
 end
 
---- Set a config value
-function Config:Set(key: string, value: any)
-    local old = self._values[key]
-    self._values[key] = value
-    -- Fire callbacks
-    if self._callbacks[key] then
-        for _, cb in ipairs(self._callbacks[key]) do
-            task.spawn(cb, value, old)
+function Section:CreateButton(config)
+    local button = Button.new(self.ContentFrame, config)
+    table.insert(self._components, button)
+    return button
+end
+
+function Section:CreateDropdown(config)
+    local dropdown = Dropdown.new(self.ContentFrame, config)
+    table.insert(self._components, dropdown)
+    return dropdown
+end
+
+function Section:CreateKeybind(config)
+    local keybind = Keybind.new(self.ContentFrame, config)
+    table.insert(self._components, keybind)
+    return keybind
+end
+
+function Section:CreateTextInput(config)
+    local textInput = TextInput.new(self.ContentFrame, config)
+    table.insert(self._components, textInput)
+    return textInput
+end
+
+function Section:CreateDivider(config)
+    local divider = Divider.new(self.ContentFrame, config or {})
+    table.insert(self._components, divider)
+    return divider
+end
+
+function Section:CreateColorPicker(config)
+    local colorPicker = ColorPicker.new(self.ContentFrame, config)
+    table.insert(self._components, colorPicker)
+    return colorPicker
+end
+
+function Section:CreateSearchInput(config)
+    local searchInput = SearchInput.new(self.ContentFrame, config)
+    table.insert(self._components, searchInput)
+    return searchInput
+end
+
+function Section:Destroy()
+    for _, conn in self._connections do
+        conn:Disconnect()
+    end
+    self._connections = {}
+
+    for _, comp in self._components do
+        if comp and type(comp.Destroy) == "function" then
+            pcall(function() comp:Destroy() end)
         end
     end
-end
+    self._components = {}
 
---- Listen for value changes on a key
-function Config:OnChanged(key: string, callback: (new: any, old: any) -> ()): () -> ()
-    if not self._callbacks[key] then
-        self._callbacks[key] = {}
-    end
-    table.insert(self._callbacks[key], callback)
-
-    -- Return unsubscribe function
-    local idx = #self._callbacks[key]
-    return function()
-        table.remove(self._callbacks[key], idx)
+    if self.Frame then
+        self.Frame:Destroy()
+        self.Frame = nil
     end
 end
 
---- Reset all values to defaults
-function Config:ResetDefaults()
-    for key, default in pairs(self._defaults) do
-        self:Set(key, default)
-    end
-end
+return Section
 
---- Get all current values as a serializable table
-function Config:GetAll(): {[string]: any}
-    local result = {}
-    for key, value in pairs(self._defaults) do
-        result[key] = self._values[key] ~= nil and self._values[key] or value
-    end
-    -- Include non-default keys too
-    for key, value in pairs(self._values) do
-        if result[key] == nil then
-            result[key] = value
-        end
-    end
-    return result
-end
+end)()
 
---- Load values from a table (e.g., from deserialized JSON)
-function Config:LoadFromTable(data: {[string]: any})
-    if type(data) ~= "table" then return end
-    for key, value in pairs(data) do
-        -- Validate: only load keys that have registered defaults or already exist
-        if self._defaults[key] ~= nil or self._values[key] ~= nil then
-            -- Type check against default
-            local default = self._defaults[key]
-            if default == nil or typeof(value) == typeof(default) then
-                self:Set(key, value)
-            end
-        end
-    end
-end
-
---- Serialize Color3 values for JSON (Color3 isn't JSON-serializable)
-local function serializeValue(value: any): any
-    if typeof(value) == "Color3" then
-        return {__type = "Color3", r = math.floor(value.R * 255), g = math.floor(value.G * 255), b = math.floor(value.B * 255)}
-    elseif typeof(value) == "EnumItem" then
-        return {__type = "Enum", enum = tostring(value.EnumType), name = value.Name}
-    elseif type(value) == "table" then
-        local result = {}
-        for k, v in pairs(value) do
-            result[k] = serializeValue(v)
-        end
-        return result
-    end
-    return value
-end
-
-local function deserializeValue(value: any): any
-    if type(value) == "table" then
-        if value.__type == "Color3" then
-            return Color3.fromRGB(value.r, value.g, value.b)
-        elseif value.__type == "Enum" then
-            local ok, result = pcall(function()
-                return Enum[value.enum][value.name]
-            end)
-            return ok and result or nil
-        else
-            local result = {}
-            for k, v in pairs(value) do
-                result[k] = deserializeValue(v)
-            end
-            return result
-        end
-    end
-    return value
-end
-
---- Get file path for a config name
-function Config:_getFilePath(name: string): string
-    return string.format("%s_%s.json", self._prefix, name)
-end
-
---- Save current config to a named slot
-function Config:Save(name: string): (boolean, string?)
-    local data = {}
-    for key, value in pairs(self:GetAll()) do
-        data[key] = serializeValue(value)
-    end
-
-    local json = HttpService:JSONEncode(data)
-
-    if self._backend == BACKENDS.FILE then
-        local ok, err = pcall(function()
-            writefile(self:_getFilePath(name), json)
-        end)
-        if not ok then
-            return false, "Failed to save: " .. tostring(err)
-        end
-        return true, nil
-    elseif self._backend == BACKENDS.MEMORY then
-        self._memoryStore[name] = json
-        return true, nil
-    end
-
-    return false, "Unsupported backend"
-end
-
---- Load a named config
-function Config:Load(name: string): (boolean, string?)
-    local json: string?
-
-    if self._backend == BACKENDS.FILE then
-        local ok, result = pcall(function()
-            return readfile(self:_getFilePath(name))
-        end)
-        if not ok then
-            return false, "Config not found: " .. tostring(name)
-        end
-        json = result
-    elseif self._backend == BACKENDS.MEMORY then
-        json = self._memoryStore[name]
-        if not json then
-            return false, "Config not found: " .. tostring(name)
-        end
-    else
-        return false, "Unsupported backend"
-    end
-
-    local ok, data = pcall(function()
-        return HttpService:JSONDecode(json)
-    end)
-    if not ok or type(data) ~= "table" then
-        return false, "Invalid config data"
-    end
-
-    -- Deserialize special types
-    for key, value in pairs(data) do
-        data[key] = deserializeValue(value)
-    end
-
-    self:LoadFromTable(data)
-    return true, nil
-end
-
---- List available config names (file backend only)
-function Config:ListConfigs(): {string}
-    local configs = {}
-    if self._backend == BACKENDS.FILE then
-        local ok, files = pcall(function()
-            return listfiles and listfiles("") or {}
-        end)
-        if ok then
-            for _, file in ipairs(files) do
-                local match = string.match(file, self._prefix .. "_(.+)%.json$")
-                if match then
-                    table.insert(configs, match)
-                end
-            end
-        end
-    elseif self._backend == BACKENDS.MEMORY then
-        for name in pairs(self._memoryStore) do
-            table.insert(configs, name)
-        end
-    end
-    return configs
-end
-
---- Delete a named config
-function Config:Delete(name: string): (boolean, string?)
-    if self._backend == BACKENDS.FILE then
-        local ok, err = pcall(function()
-            delfile(self:_getFilePath(name))
-        end)
-        return ok, err
-    elseif self._backend == BACKENDS.MEMORY then
-        self._memoryStore[name] = nil
-        return true, nil
-    end
-    return false, "Unsupported backend"
-end
-
-return Config
-end
-
--- ===== Embedded module: Utils.Draggable =====
-__modules['Utils.Draggable'] = function()
---[[
-    Draggable.lua — Smooth window dragging utility.
-    Makes a frame draggable by its header without interfering with child controls.
-]]
-
-local UserInputService = game:GetService("UserInputService")
-
-local Draggable = {}
-
---- Make a frame draggable via a designated handle region
---- @param frame Frame — The frame to move
---- @param handle GuiObject — The area that captures drag input (e.g., header bar)
---- @return function — Call to disconnect and stop dragging
-function Draggable.Enable(frame: Frame, handle: GuiObject): () -> ()
-    local dragging = false
-    local dragStart: Vector3 = Vector3.zero
-    local startPos: UDim2 = frame.Position
-
-    local connections = {}
-
-    connections[1] = handle.InputBegan:Connect(function(input: InputObject)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    connections[2] = handle.InputEnded:Connect(function(input: InputObject)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-
-    connections[3] = UserInputService.InputChanged:Connect(function(input: InputObject)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
-                         input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    -- Return cleanup function
-    return function()
-        dragging = false
-        for _, conn in ipairs(connections) do
-            conn:Disconnect()
-        end
-    end
-end
-
-return Draggable
-end
-
--- ===== Embedded module: Window =====
-__modules['Window'] = function()
+-- [Window]
+_M["Window"] = (function()
 --[[
     Window.lua — CS:GO-style main application window
     Part of CSGOLib — a premium Roblox UI library
@@ -5295,22 +5092,22 @@ __modules['Window'] = function()
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
-local Theme = __require("Theme")
-local Draggable = __require("Utils.Draggable")
-local Animation = __require("Utils.Animation")
-local ESPPreview = __require("ESPPreview")
+local Theme = _M["Theme"]
+local Draggable = _M["Utils_Draggable"]
+local Animation = _M["Utils_Animation"]
+local ESPPreview = _M["ESPPreview"]
 
 -- Component requires
-local Toggle = __require("Components.Toggle")
-local Slider = __require("Components.Slider")
-local Button = __require("Components.Button")
-local Dropdown = __require("Components.Dropdown")
-local Keybind = __require("Components.Keybind")
-local TextInput = __require("Components.TextInput")
-local Section = __require("Components.Section")
-local Divider = __require("Components.Divider")
-local ColorPicker = __require("Components.ColorPicker")
-local SearchInput = __require("Components.SearchInput")
+local Toggle = _M["Components_Toggle"]
+local Slider = _M["Components_Slider"]
+local Button = _M["Components_Button"]
+local Dropdown = _M["Components_Dropdown"]
+local Keybind = _M["Components_Keybind"]
+local TextInput = _M["Components_TextInput"]
+local Section = _M["Components_Section"]
+local Divider = _M["Components_Divider"]
+local ColorPicker = _M["Components_ColorPicker"]
+local SearchInput = _M["Components_SearchInput"]
 
 --------------------------------------------------------------------------------
 -- Tab class
@@ -6107,566 +5904,214 @@ function Window:Destroy()
 end
 
 return Window
+
+end)()
+
+-- [init]
+_M["init"] = (function()
+--[[
+    init.lua — CSGOLib Main Library Entry Point
+    
+    The top-level module that ties together the entire CS:GO-style
+    Roblox UI library. Handles ScreenGui creation, optional authentication
+    via the Loader, Window instantiation, Config management, and
+    Notification integration.
+    
+    Usage:
+        local CSGOLib = require(path.to.CSGOLib)
+        local window = CSGOLib:CreateWindow({
+            Title = "My Script",
+            Version = "v2.0.0",
+            ToggleKey = Enum.KeyCode.RightShift,
+            Authentication = {
+                Enabled = true,
+                Title = "My Script",
+                Version = "v2.0.0",
+                VerifyCallback = function(key) return true end,
+                GetKeyURL = "https://example.com/getkey",
+                TestMode = false,
+            },
+        })
+]]
+
+local Players = game:GetService("Players")
+
+local Theme = _M["Theme"]
+local Loader = _M["Loader"]
+local Window = _M["Window"]
+local Config = _M["Utils_Config"]
+local Notification = _M["Components_Notification"]
+
+local Library = {}
+
+function Library.__index(t, k)
+    local val = rawget(Library, k)
+    if val ~= nil then return val end
+    local window = rawget(t, "_window")
+    if window and window[k] then
+        if type(window[k]) == "function" then
+            return function(_, ...)
+                return window[k](window, ...)
+            end
+        end
+        return window[k]
+    end
+    return nil
 end
 
--- ===== Auto-run showcase UI =====
-local Players = game:GetService("Players")
-local Library = __require("init")
+function Library:CreateWindow(config)
+    config = config or {}
+    local self = setmetatable({}, Library)
 
-local Window = Library:CreateWindow({
-    Title = "GAMESNEEZE",
-    Version = "2.4.1",
-    Theme = "CSGO",
-    ToggleKey = Enum.KeyCode.RightShift,
+    self._title = config.Title or "CSGOLib"
+    self._version = config.Version or "v1.0.0"
+    self._toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
+    self._theme = config.Theme or "default"
 
-    -- Key Loader Configuration
-    Authentication = {
-        Enabled = true,                -- Show the classic CS:GO key loader first
-        Title = "GAMESNEEZE",
-        Version = "2.4.1",
-        TestMode = true,               -- Accepts any key in development mode
-        GetKeyURL = "https://discord.gg/example",
-        VerifyCallback = function(enteredKey: string)
-            -- Production example: Verify key against your HTTP verification endpoint
-            -- In TestMode = true, this is bypassed with a simulated 1-second delay.
-            -- Real implementation:
-            -- local res = HttpService:RequestAsync({ Url = "https://api.example.com/verify?key=" .. enteredKey })
-            -- return res.Success and res.Body == "VALID", "Key has expired or is invalid"
-            return true, nil
+    self._screenGui = nil
+    self._window = nil
+    self._loader = nil
+    self._config = nil
+    self._notificationManager = nil
+
+    -- Create the ScreenGui
+    self._screenGui = Instance.new("ScreenGui")
+    self._screenGui.Name = "CSGOLib"
+    self._screenGui.ResetOnSpawn = false
+    self._screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self._screenGui.IgnoreGuiInset = false
+    self._screenGui.DisplayOrder = 100
+
+    -- Parent to CoreGui if possible, otherwise PlayerGui
+    local ok = pcall(function()
+        self._screenGui.Parent = game:GetService("CoreGui")
+    end)
+    if not ok or not self._screenGui.Parent then
+        local player = Players.LocalPlayer
+        if player then
+            self._screenGui.Parent = player:WaitForChild("PlayerGui")
+        end
+    end
+
+    -- Create the Config manager
+    self._config = Config.new("CSGOLib")
+
+    -- Create the Notification manager
+    self._notificationManager = Notification.new(self._screenGui)
+
+    -- Create the Window structure immediately so tabs & controls can be attached
+    self:_createWindow()
+
+    -- Authentication flow
+    local authConfig = config.Authentication
+    if authConfig and authConfig.Enabled then
+        -- Hide window until authentication succeeds
+        if self._window and self._window._canvasGroup then
+            self._window._canvasGroup.Visible = false
+            self._window._visible = false
+        end
+        self:_startAuthFlow(authConfig)
+    else
+        if self._window then
+            self._window:Show()
+        end
+    end
+
+    return self
+end
+
+function Library:_startAuthFlow(authConfig)
+    local loaderConfig = {
+        Title = authConfig.Title or self._title,
+        Version = authConfig.Version or self._version,
+        VerifyCallback = authConfig.VerifyCallback,
+        GetKeyURL = authConfig.GetKeyURL,
+        TestMode = authConfig.TestMode or false,
+        OnSuccess = function()
+            -- Reveal main window
+            if self._window then
+                self._window:Show()
+            end
+            if self._notificationManager then
+                self._notificationManager:Notify({
+                    Message = "Authenticated successfully. Welcome!",
+                    Type = "success",
+                    Duration = 3,
+                })
+            end
         end,
-    },
-})
-
-local ConfigManager = Library:GetConfig()
-
---------------------------------------------------------------------------------
--- 2. HOME TAB
---------------------------------------------------------------------------------
-
-local HomeTab = Window:CreateTab({
-    Name = "Home",
-    Icon = "⌂",
-    LayoutOrder = 1,
-})
-
-local WelcomeSection = HomeTab:CreateSection({
-    Name = "System Overview",
-    Collapsible = false,
-})
-
-WelcomeSection:CreateButton({
-    Name = "Join Community Discord",
-    Description = "Copies official Discord link to clipboard",
-    Callback = function()
-        if setclipboard then
-            setclipboard("https://discord.gg/example")
-        end
-        Library:Notify({
-            Message = "Discord invite copied to clipboard!",
-            Type = "Success",
-            Duration = 3,
-        })
-    end,
-})
-
-WelcomeSection:CreateDivider()
-
-local ChangelogSection = HomeTab:CreateSection({
-    Name = "Changelog v2.4.1",
-    Collapsible = true,
-    DefaultOpen = true,
-})
-
-ChangelogSection:CreateButton({
-    Name = "[+] Added 2D ESP Viewport Simulator",
-    Callback = function() end,
-})
-
-ChangelogSection:CreateButton({
-    Name = "[+] Added Square CS:GO Key Authentication",
-    Callback = function() end,
-})
-
-ChangelogSection:CreateButton({
-    Name = "[*] Optimized Bounding Box & Skeleton rendering",
-    Callback = function() end,
-})
-
-ChangelogSection:CreateButton({
-    Name = "[*] Refactored Config JSON serialization",
-    Callback = function() end,
-})
-
---------------------------------------------------------------------------------
--- 3. ESP TAB & DEDICATED PREVIEW SIMULATOR
---------------------------------------------------------------------------------
-
-local ESPTab = Window:CreateTab({
-    Name = "ESP",
-    Icon = "👁",
-    LayoutOrder = 2,
-})
-
--- Instantiate the dedicated ESP Preview viewport in the right panel of this tab
-local ESPPreview = ESPTab:CreateESPPreview({
-    ShowBoxes = true,
-    ShowNames = true,
-    ShowHealth = true,
-    ShowDistance = true,
-    ShowSkeleton = true,
-    ShowWeapons = true,
-    TargetCount = 3,
-    AccentColor = Color3.fromRGB(220, 150, 40),
-})
-
-local PreviewControls = ESPTab:CreateSection({
-    Name = "ESP Preview Simulator",
-    Collapsible = false,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Bounding Boxes",
-    Default = true,
-    Description = "Draw rectangular tactical outline around targets",
-    Callback = function(val)
-        ESPPreview:Update({ ShowBoxes = val })
-    end,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Player Names",
-    Default = true,
-    Description = "Render callout labels above targets",
-    Callback = function(val)
-        ESPPreview:Update({ ShowNames = val })
-    end,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Health Bars",
-    Default = true,
-    Description = "Dynamic green/yellow/red vertical health meters",
-    Callback = function(val)
-        ESPPreview:Update({ ShowHealth = val })
-    end,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Distance Labels",
-    Default = true,
-    Description = "Display simulated meter distance beneath feet",
-    Callback = function(val)
-        ESPPreview:Update({ ShowDistance = val })
-    end,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Skeleton Lines",
-    Default = true,
-    Description = "Anatomical bone structure connectivity lines",
-    Callback = function(val)
-        ESPPreview:Update({ ShowSkeleton = val })
-    end,
-})
-
-PreviewControls:CreateToggle({
-    Name = "Weapon Icons & Names",
-    Default = true,
-    Description = "Display current primary/secondary firearm",
-    Callback = function(val)
-        ESPPreview:Update({ ShowWeapons = val })
-    end,
-})
-
-PreviewControls:CreateSlider({
-    Name = "Simulated Targets",
-    Min = 1,
-    Max = 8,
-    Default = 3,
-    Step = 1,
-    Suffix = " bots",
-    Callback = function(val)
-        ESPPreview:SetTargetCount(val)
-    end,
-})
-
-PreviewControls:CreateColorPicker({
-    Name = "Box Accent Color",
-    Default = Color3.fromRGB(220, 150, 40),
-    Callback = function(color)
-        ESPPreview:SetAccentColor(color)
-    end,
-})
-
-local WorldESPSection = ESPTab:CreateSection({
-    Name = "World & Dropped Items",
-    Collapsible = true,
-    DefaultOpen = false,
-})
-
-WorldESPSection:CreateToggle({
-    Name = "Dropped Weapons",
-    Default = false,
-    Callback = function(val)
-        Library:Notify({
-            Message = "Dropped Weapons ESP: " .. (val and "ON" or "OFF"),
-            Type = "Info",
-            Duration = 2,
-        })
-    end,
-})
-
-WorldESPSection:CreateToggle({
-    Name = "Defuse Kits / Objectives",
-    Default = true,
-    Callback = function() end,
-})
-
-WorldESPSection:CreateSlider({
-    Name = "Max Render Distance",
-    Min = 50,
-    Max = 1000,
-    Default = 300,
-    Step = 25,
-    Suffix = "m",
-    Callback = function() end,
-})
-
---------------------------------------------------------------------------------
--- 4. COMBAT TAB
---------------------------------------------------------------------------------
-
-local CombatTab = Window:CreateTab({
-    Name = "Combat",
-    Icon = "⊕",
-    LayoutOrder = 3,
-})
-
-local AimbotSection = CombatTab:CreateSection({
-    Name = "Aimbot Configuration",
-    Collapsible = false,
-})
-
-AimbotSection:CreateToggle({
-    Name = "Master Aimbot",
-    Default = false,
-    Description = "Enable tactical aim assistance",
-    Callback = function(val)
-        Library:Notify({
-            Message = "Aimbot: " .. (val and "ENABLED" or "DISABLED"),
-            Type = val and "Success" or "Warning",
-            Duration = 2,
-        })
-    end,
-})
-
-AimbotSection:CreateKeybind({
-    Name = "Aimbot Activation Key",
-    Default = Enum.KeyCode.F,
-    Callback = function(key)
-        Library:Notify({
-            Message = "Aim key rebound to: " .. (key and key.Name or "None"),
-            Type = "Info",
-            Duration = 2,
-        })
-    end,
-})
-
-AimbotSection:CreateDropdown({
-    Name = "Target Hitbox",
-    Options = {"Head", "Neck", "Upper Chest", "Pelvis", "Closest Bone"},
-    Default = "Head",
-    Callback = function(choice)
-        Library:Notify({
-            Message = "Target Hitbox set to: " .. choice,
-            Type = "Info",
-            Duration = 2,
-        })
-    end,
-})
-
-AimbotSection:CreateSlider({
-    Name = "Field of View (FOV)",
-    Min = 10,
-    Max = 360,
-    Default = 90,
-    Step = 5,
-    Suffix = "°",
-    Callback = function() end,
-})
-
-AimbotSection:CreateSlider({
-    Name = "Aim Smoothness",
-    Min = 1,
-    Max = 20,
-    Default = 5,
-    Step = 1,
-    Callback = function() end,
-})
-
-local TriggerbotSection = CombatTab:CreateSection({
-    Name = "Triggerbot",
-    Collapsible = true,
-    DefaultOpen = false,
-})
-
-TriggerbotSection:CreateToggle({
-    Name = "Auto Fire on Crosshair",
-    Default = false,
-    Callback = function() end,
-})
-
-TriggerbotSection:CreateSlider({
-    Name = "Reaction Delay",
-    Min = 0,
-    Max = 300,
-    Default = 35,
-    Step = 5,
-    Suffix = "ms",
-    Callback = function() end,
-})
-
---------------------------------------------------------------------------------
--- 5. MOVEMENT TAB
---------------------------------------------------------------------------------
-
-local MovementTab = Window:CreateTab({
-    Name = "Movement",
-    Icon = "⚡",
-    LayoutOrder = 4,
-})
-
-local BhopSection = MovementTab:CreateSection({
-    Name = "Locomotion & Bunnyhop",
-    Collapsible = false,
-})
-
-BhopSection:CreateToggle({
-    Name = "Auto Bunnyhop",
-    Default = true,
-    Description = "Automatically jumps on touching ground",
-    Callback = function(val)
-        Library:Notify({
-            Message = "Bunnyhop: " .. (val and "ACTIVE" or "OFF"),
-            Type = "Info",
-            Duration = 2,
-        })
-    end,
-})
-
-BhopSection:CreateToggle({
-    Name = "Air Strafe Helper",
-    Default = false,
-    Description = "Optimizes rotational velocity in air",
-    Callback = function() end,
-})
-
-BhopSection:CreateSlider({
-    Name = "WalkSpeed Modifier",
-    Min = 16,
-    Max = 120,
-    Default = 16,
-    Step = 2,
-    Suffix = " sps",
-    Callback = function(speed)
-        local character = Players.LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid.WalkSpeed = speed
-        end
-    end,
-})
-
-BhopSection:CreateKeybind({
-    Name = "Air Freeze Key",
-    Default = Enum.KeyCode.Z,
-    Callback = function() end,
-})
-
---------------------------------------------------------------------------------
--- 6. MISC TAB
---------------------------------------------------------------------------------
-
-local MiscTab = Window:CreateTab({
-    Name = "Misc",
-    Icon = "⚙",
-    LayoutOrder = 5,
-})
-
-local VisualMiscSection = MiscTab:CreateSection({
-    Name = "Visual Customization",
-    Collapsible = false,
-})
-
-VisualMiscSection:CreateToggle({
-    Name = "Sniper Crosshair",
-    Default = true,
-    Description = "Render persistent tactical crosshair",
-    Callback = function() end,
-})
-
-VisualMiscSection:CreateColorPicker({
-    Name = "Crosshair Accent",
-    Default = Color3.fromRGB(72, 175, 72),
-    Callback = function(c)
-        Library:Notify({
-            Message = string.format("Crosshair color updated to RGB(%d, %d, %d)", c.R*255, c.G*255, c.B*255),
-            Type = "Info",
-            Duration = 2,
-        })
-    end,
-})
-
-VisualMiscSection:CreateDivider()
-
-local UtilitySection = MiscTab:CreateSection({
-    Name = "Game Utilities",
-    Collapsible = true,
-    DefaultOpen = true,
-})
-
-UtilitySection:CreateTextInput({
-    Name = "Custom Clan Tag",
-    Default = "GAMESNEEZE",
-    Placeholder = "Enter 4-10 char tag...",
-    Callback = function(tag)
-        Library:Notify({
-            Message = "Clan tag set to: [" .. tag .. "]",
-            Type = "Success",
-            Duration = 2,
-        })
-    end,
-})
-
-UtilitySection:CreateToggle({
-    Name = "Watermark Overlay",
-    Default = true,
-    Callback = function() end,
-})
-
---------------------------------------------------------------------------------
--- 7. SETTINGS TAB
---------------------------------------------------------------------------------
-
-local SettingsTab = Window:CreateTab({
-    Name = "Settings",
-    Icon = "🛠",
-    LayoutOrder = 6,
-})
-
-local UISettingsSection = SettingsTab:CreateSection({
-    Name = "Menu Configuration",
-    Collapsible = false,
-})
-
-UISettingsSection:CreateKeybind({
-    Name = "Menu Toggle Key",
-    Default = Enum.KeyCode.RightShift,
-    Callback = function(key)
-        if key then
-            Library:Notify({
-                Message = "Menu Toggle Key updated to: " .. key.Name,
-                Type = "Success",
-                Duration = 3,
-            })
-        end
-    end,
-})
-
-UISettingsSection:CreateButton({
-    Name = "Unload / Destroy Interface",
-    Description = "Safely disconnects all hooks and removes ScreenGuis",
-    Callback = function()
-        Library:Notify({
-            Message = "Unloading CSGOLib...",
-            Type = "Warning",
-            Duration = 1.5,
-        })
-        task.wait(1.5)
-        Library:Destroy()
-    end,
-})
-
---------------------------------------------------------------------------------
--- 8. CONFIGS TAB (PERSISTENCE SYSTEM)
---------------------------------------------------------------------------------
-
-local ConfigsTab = Window:CreateTab({
-    Name = "Configs",
-    Icon = "💾",
-    LayoutOrder = 7,
-})
-
-local PresetsSection = ConfigsTab:CreateSection({
-    Name = "Profile & Preset Management",
-    Collapsible = false,
-})
-
-local configNameInput = "default"
-
-PresetsSection:CreateTextInput({
-    Name = "Profile Name",
-    Default = "legit_csgo",
-    Placeholder = "config_name",
-    Callback = function(text)
-        configNameInput = text
-    end,
-})
-
-PresetsSection:CreateButton({
-    Name = "Save Profile",
-    Description = "Serialize all current control states into storage",
-    Callback = function()
-        local ok, err = ConfigManager:Save(configNameInput)
-        if ok then
-            Library:Notify({
-                Message = "Configuration '" .. configNameInput .. "' saved successfully!",
-                Type = "Success",
-                Duration = 3,
-            })
-        else
-            Library:Notify({
-                Message = "Failed to save: " .. tostring(err),
-                Type = "Error",
-                Duration = 4,
-            })
-        end
-    end,
-})
-
-PresetsSection:CreateButton({
-    Name = "Load Profile",
-    Description = "Restore states from saved preset",
-    Callback = function()
-        local ok, err = ConfigManager:Load(configNameInput)
-        if ok then
-            Library:Notify({
-                Message = "Configuration '" .. configNameInput .. "' loaded!",
-                Type = "Success",
-                Duration = 3,
-            })
-        else
-            Library:Notify({
-                Message = "Load error: " .. tostring(err),
-                Type = "Error",
-                Duration = 4,
-            })
-        end
-    end,
-})
-
-PresetsSection:CreateButton({
-    Name = "Reset Defaults",
-    Description = "Reset all controls back to stock factory settings",
-    Callback = function()
-        ConfigManager:ResetDefaults()
-        Library:Notify({
-            Message = "All options reset to default values.",
-            Type = "Warning",
-            Duration = 3,
-        })
-    end,
-})
-
-print("[CSGOLib] Successfully loaded Gamesneeze CS:GO Square Tactical UI.")
+    }
+
+    self._loader = Loader.new(loaderConfig)
+    self._loader:Show()
+end
+
+function Library:_createWindow()
+    self._window = Window.new(self._screenGui, {
+        Title = self._title,
+        Version = self._version,
+        ToggleKey = self._toggleKey,
+    })
+
+    -- Connect notification manager to window
+    self._window:SetNotificationManager(self._notificationManager)
+end
+
+function Library:CreateTab(...)
+    if not self._window then
+        self:_createWindow()
+    end
+    return self._window:CreateTab(...)
+end
+
+function Library:Notify(config)
+    if not self._notificationManager then return end
+    self._notificationManager:Notify({
+        Message = config.Message or "",
+        Type = config.Type or "info",
+        Duration = config.Duration or 3,
+    })
+end
+
+function Library:GetConfig()
+    return self._config
+end
+
+function Library:GetWindow()
+    return self._window
+end
+
+function Library:Destroy()
+    -- Destroy the window
+    if self._window then
+        self._window:Destroy()
+        self._window = nil
+    end
+
+    -- Destroy the loader
+    if self._loader then
+        self._loader:Destroy()
+        self._loader = nil
+    end
+
+    -- Destroy the notification manager
+    if self._notificationManager then
+        self._notificationManager:Destroy()
+        self._notificationManager = nil
+    end
+
+    -- Destroy the config (no persistent state to clean)
+    self._config = nil
+
+    -- Destroy the ScreenGui
+    if self._screenGui then
+        self._screenGui:Destroy()
+        self._screenGui = nil
+    end
+end
 
 return Library
+
+end)()
+
+return _M["init"]
