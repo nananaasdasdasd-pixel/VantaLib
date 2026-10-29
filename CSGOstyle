@@ -1961,7 +1961,6 @@ local KEY_DISPLAY_NAMES = {
     [Enum.KeyCode.Equals] = "=",
     [Enum.KeyCode.LeftBracket] = "[",
     [Enum.KeyCode.RightBracket] = "]",
-    [Enum.KeyCode.BackSlash] = "\\",
     [Enum.KeyCode.Semicolon] = ";",
     [Enum.KeyCode.Quote] = "'",
     [Enum.KeyCode.Comma] = ",",
