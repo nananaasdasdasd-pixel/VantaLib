@@ -161,7 +161,7 @@ Theme.Corner = {
 }
 
 -- ── Utility: Create a themed instance ──────────────────────────────────────
-function Theme.Create(className: string, properties: {[string]: any}): Instance
+function Theme.Create(className, properties)
     local instance = Instance.new(className)
     for prop, value in pairs(properties) do
         if prop ~= "Parent" and prop ~= "Children" then
@@ -180,7 +180,7 @@ function Theme.Create(className: string, properties: {[string]: any}): Instance
 end
 
 -- ── Utility: Apply border to a frame ───────────────────────────────────────
-function Theme.ApplyBorder(frame: Frame, color: Color3?)
+function Theme.ApplyBorder(frame, color?)
     local stroke = Instance.new("UIStroke")
     stroke.Color = color or Theme.Colors.Border
     stroke.Thickness = Theme.Sizes.BorderThickness
@@ -190,7 +190,7 @@ function Theme.ApplyBorder(frame: Frame, color: Color3?)
 end
 
 -- ── Utility: Apply corner radius ───────────────────────────────────────────
-function Theme.ApplyCorner(frame: Frame, radius: UDim?)
+function Theme.ApplyCorner(frame, radius: UDim?)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = radius or Theme.Corner.Tiny
     corner.Parent = frame
@@ -198,7 +198,7 @@ function Theme.ApplyCorner(frame: Frame, radius: UDim?)
 end
 
 -- ── Utility: Apply padding ─────────────────────────────────────────────────
-function Theme.ApplyPadding(frame: Frame, top: number?, bottom: number?, left: number?, right: number?)
+function Theme.ApplyPadding(frame, top?, bottom?, left?, right?)
     local padding = Instance.new("UIPadding")
     padding.PaddingTop = UDim.new(0, top or 0)
     padding.PaddingBottom = UDim.new(0, bottom or 0)
@@ -209,7 +209,7 @@ function Theme.ApplyPadding(frame: Frame, top: number?, bottom: number?, left: n
 end
 
 -- ── Utility: Apply list layout ─────────────────────────────────────────────
-function Theme.ApplyListLayout(frame: Frame, padding: number?, direction: Enum.FillDirection?, hAlign: Enum.HorizontalAlignment?, vAlign: Enum.VerticalAlignment?)
+function Theme.ApplyListLayout(frame, padding?, direction: Enum.FillDirection?, hAlign: Enum.HorizontalAlignment?, vAlign: Enum.VerticalAlignment?)
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, padding or Theme.Spacing.Small)
     layout.FillDirection = direction or Enum.FillDirection.Vertical
@@ -245,7 +245,7 @@ local BACKENDS = {
 }
 
 --- Detect available storage backend
-local function detectBackend(): string
+local function detectBackend()
     -- Check for executor file functions
     if typeof(writefile) == "function" and typeof(readfile) == "function" then
         return BACKENDS.FILE
@@ -261,7 +261,7 @@ local function detectBackend(): string
 end
 
 --- Create a new Config manager
-function Config.new(prefix: string?)
+function Config.new(prefix?)
     local self = setmetatable({}, Config)
     self._prefix = prefix or "CSGOLib"
     self._backend = detectBackend()
@@ -273,7 +273,7 @@ function Config.new(prefix: string?)
 end
 
 --- Register a default value for a key
-function Config:SetDefault(key: string, value: any)
+function Config:SetDefault(key, value: any)
     self._defaults[key] = value
     if self._values[key] == nil then
         self._values[key] = value
@@ -281,14 +281,14 @@ function Config:SetDefault(key: string, value: any)
 end
 
 --- Register multiple defaults
-function Config:SetDefaults(defaults: {[string]: any})
+function Config:SetDefaults(defaults)
     for key, value in pairs(defaults) do
         self:SetDefault(key, value)
     end
 end
 
 --- Get a config value
-function Config:Get(key: string): any
+function Config:Get(key): any
     local value = self._values[key]
     if value == nil then
         return self._defaults[key]
@@ -297,7 +297,7 @@ function Config:Get(key: string): any
 end
 
 --- Set a config value
-function Config:Set(key: string, value: any)
+function Config:Set(key, value: any)
     local old = self._values[key]
     self._values[key] = value
     -- Fire callbacks
@@ -309,7 +309,7 @@ function Config:Set(key: string, value: any)
 end
 
 --- Listen for value changes on a key
-function Config:OnChanged(key: string, callback: (new: any, old: any) -> ()): () -> ()
+function Config:OnChanged(key, callback: (new: any, old: any) -> ()): () -> ()
     if not self._callbacks[key] then
         self._callbacks[key] = {}
     end
@@ -345,7 +345,7 @@ function Config:GetAll(): {[string]: any}
 end
 
 --- Load values from a table (e.g., from deserialized JSON)
-function Config:LoadFromTable(data: {[string]: any})
+function Config:LoadFromTable(data)
     if type(data) ~= "table" then return end
     for key, value in pairs(data) do
         -- Validate: only load keys that have registered defaults or already exist
@@ -396,12 +396,12 @@ local function deserializeValue(value: any): any
 end
 
 --- Get file path for a config name
-function Config:_getFilePath(name: string): string
+function Config:_getFilePath(name)
     return string.format("%s_%s.json", self._prefix, name)
 end
 
 --- Save current config to a named slot
-function Config:Save(name: string): (boolean, string?)
+function Config:Save(name): (boolean, string?)
     local data = {}
     for key, value in pairs(self:GetAll()) do
         data[key] = serializeValue(value)
@@ -426,8 +426,8 @@ function Config:Save(name: string): (boolean, string?)
 end
 
 --- Load a named config
-function Config:Load(name: string): (boolean, string?)
-    local json: string?
+function Config:Load(name): (boolean, string?)
+    local json?
 
     if self._backend == BACKENDS.FILE then
         local ok, result = pcall(function()
@@ -486,7 +486,7 @@ function Config:ListConfigs(): {string}
 end
 
 --- Delete a named config
-function Config:Delete(name: string): (boolean, string?)
+function Config:Delete(name): (boolean, string?)
     if self._backend == BACKENDS.FILE then
         local ok, err = pcall(function()
             delfile(self:_getFilePath(name))
@@ -518,10 +518,10 @@ local Draggable = {}
 --- @param frame Frame — The frame to move
 --- @param handle GuiObject — The area that captures drag input (e.g., header bar)
 --- @return function — Call to disconnect and stop dragging
-function Draggable.Enable(frame: Frame, handle: GuiObject): () -> ()
+function Draggable.Enable(frame, handle): () -> ()
     local dragging = false
-    local dragStart: Vector3 = Vector3.zero
-    local startPos: UDim2 = frame.Position
+    local dragStart = Vector3.zero
+    local startPos = frame.Position
 
     local connections = {}
 
@@ -585,7 +585,7 @@ local Animation = {}
 local _tweenInfoCache = {}
 
 --- Get or create a TweenInfo with the given parameters
-function Animation.GetTweenInfo(duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): TweenInfo
+function Animation.GetTweenInfo(duration?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?)
     local d = duration or 0.18
     local s = easeStyle or Enum.EasingStyle.Quad
     local dir = easeDirection or Enum.EasingDirection.Out
@@ -597,7 +597,7 @@ function Animation.GetTweenInfo(duration: number?, easeStyle: Enum.EasingStyle?,
 end
 
 --- Tween an instance's properties smoothly
-function Animation.Tween(instance: Instance, properties: {[string]: any}, duration: number?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?): Tween
+function Animation.Tween(instance, properties: {[string]: any}, duration?, easeStyle: Enum.EasingStyle?, easeDirection: Enum.EasingDirection?)
     local info = Animation.GetTweenInfo(duration, easeStyle, easeDirection)
     local tween = TweenService:Create(instance, info, properties)
     tween:Play()
@@ -605,29 +605,29 @@ function Animation.Tween(instance: Instance, properties: {[string]: any}, durati
 end
 
 --- Fade in: animate BackgroundTransparency from 1 to target
-function Animation.FadeIn(instance: GuiObject, duration: number?, targetTransparency: number?): Tween
+function Animation.FadeIn(instance, duration?, targetTransparency?)
     local target = targetTransparency or 0
     instance.BackgroundTransparency = 1
     return Animation.Tween(instance, {BackgroundTransparency = target}, duration or 0.3)
 end
 
 --- Fade out: animate BackgroundTransparency to 1
-function Animation.FadeOut(instance: GuiObject, duration: number?): Tween
+function Animation.FadeOut(instance, duration?)
     return Animation.Tween(instance, {BackgroundTransparency = 1}, duration or 0.3)
 end
 
 --- Fade text/image transparency
-function Animation.FadeTextIn(instance: TextLabel | TextButton, duration: number?): Tween
+function Animation.FadeTextIn(instance | TextButton, duration?)
     instance.TextTransparency = 1
     return Animation.Tween(instance, {TextTransparency = 0}, duration or 0.25)
 end
 
-function Animation.FadeTextOut(instance: TextLabel | TextButton, duration: number?): Tween
+function Animation.FadeTextOut(instance | TextButton, duration?)
     return Animation.Tween(instance, {TextTransparency = 1}, duration or 0.25)
 end
 
 --- Fade entire group (using GroupTransparency on a CanvasGroup or manual traversal)
-function Animation.FadeGroupIn(container: GuiObject, duration: number?): Tween?
+function Animation.FadeGroupIn(container, duration?)
     if container:IsA("CanvasGroup") then
         container.GroupTransparency = 1
         return Animation.Tween(container, {GroupTransparency = 0}, duration or 0.35)
@@ -641,7 +641,7 @@ function Animation.FadeGroupIn(container: GuiObject, duration: number?): Tween?
     return nil
 end
 
-function Animation.FadeGroupOut(container: GuiObject, duration: number?): Tween?
+function Animation.FadeGroupOut(container, duration?)
     if container:IsA("CanvasGroup") then
         return Animation.Tween(container, {GroupTransparency = 1}, duration or 0.3)
     end
@@ -654,13 +654,13 @@ function Animation.FadeGroupOut(container: GuiObject, duration: number?): Tween?
 end
 
 --- Slide in from offset
-function Animation.SlideIn(instance: GuiObject, fromOffset: UDim2, toPosition: UDim2, duration: number?): Tween
+function Animation.SlideIn(instance, fromOffset, toPosition, duration?)
     instance.Position = fromOffset
     return Animation.Tween(instance, {Position = toPosition}, duration or 0.25)
 end
 
 --- Hover color effect
-function Animation.HoverColor(instance: GuiObject, hoverColor: Color3, normalColor: Color3, duration: number?)
+function Animation.HoverColor(instance, hoverColor, normalColor, duration?)
     local d = duration or 0.1
     instance.MouseEnter:Connect(function()
         Animation.Tween(instance, {BackgroundColor3 = hoverColor}, d)
@@ -671,7 +671,7 @@ function Animation.HoverColor(instance: GuiObject, hoverColor: Color3, normalCol
 end
 
 --- Hover text color effect
-function Animation.HoverTextColor(instance: TextLabel | TextButton, hoverColor: Color3, normalColor: Color3, duration: number?)
+function Animation.HoverTextColor(instance | TextButton, hoverColor, normalColor, duration?)
     local d = duration or 0.1
     instance.MouseEnter:Connect(function()
         Animation.Tween(instance, {TextColor3 = hoverColor}, d)
@@ -682,7 +682,7 @@ function Animation.HoverTextColor(instance: TextLabel | TextButton, hoverColor: 
 end
 
 --- Simple pulse (subtle size or transparency pulse)
-function Animation.Pulse(instance: GuiObject, property: string, valueA: any, valueB: any, duration: number?)
+function Animation.Pulse(instance, property, valueA: any, valueB: any, duration?)
     local d = duration or 0.5
     local tweenA = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueA})
     local tweenB = TweenService:Create(instance, Animation.GetTweenInfo(d, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {[property] = valueB})
@@ -707,7 +707,7 @@ function Animation.Pulse(instance: GuiObject, property: string, valueA: any, val
 end
 
 --- Loading spinner dots animation
-function Animation.LoadingDots(label: TextLabel, baseText: string, interval: number?)
+function Animation.LoadingDots(label, baseText, interval?)
     local int = interval or 0.4
     local dotCount = 0
     local running = true
@@ -752,12 +752,7 @@ local Theme = _M["Theme"]
 local Button = {}
 Button.__index = Button
 
-function Button.new(parent: Frame, config: {
-    Name: string,
-    Callback: (() -> ())?,
-    Width: number?,
-    Description: string?
-})
+function Button.new(parent, config)
     local self = setmetatable({}, Button)
 
     self._callback = config.Callback
@@ -773,9 +768,7 @@ function Button.new(parent: Frame, config: {
     -- Root frame
     self.Frame = Theme.Create("Frame", {
         Name = "Button_" .. config.Name,
-        Size = if config.Width
-            then UDim2.new(0, config.Width, 0, totalHeight)
-            else UDim2.new(1, 0, 0, totalHeight),
+        Size = config.Width and UDim2.new(0, config.Width, 0, totalHeight) or UDim2.new(1, 0, 0, totalHeight),
         BackgroundTransparency = 1,
         Parent = parent,
     })
@@ -783,9 +776,7 @@ function Button.new(parent: Frame, config: {
     -- Button body
     local buttonFrame = Theme.Create("TextButton", {
         Name = "ButtonBody",
-        Size = if config.Width
-            then UDim2.new(0, config.Width, 0, Theme.Sizes.ButtonHeight)
-            else UDim2.new(1, 0, 0, Theme.Sizes.ButtonHeight),
+        Size = config.Width and UDim2.new(0, config.Width, 0, Theme.Sizes.ButtonHeight) or UDim2.new(1, 0, 0, Theme.Sizes.ButtonHeight),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Theme.Colors.SurfaceLight,
         BorderSizePixel = 0,
@@ -867,11 +858,11 @@ function Button.new(parent: Frame, config: {
     return self
 end
 
-function Button:SetValue(text: string)
+function Button:SetValue(text)
     self._buttonFrame.Text = text
 end
 
-function Button:GetValue(): string
+function Button:GetValue()
     return self._buttonFrame.Text
 end
 
@@ -906,17 +897,17 @@ local ColorPicker = {}
 ColorPicker.__index = ColorPicker
 
 -- Utility: HSV to Color3
-local function hsvToColor3(h: number, s: number, v: number): Color3
+local function hsvToColor3(h, s, v)
     return Color3.fromHSV(math.clamp(h, 0, 1), math.clamp(s, 0, 1), math.clamp(v, 0, 1))
 end
 
--- Utility: Color3 to hex string
-local function color3ToHex(c: Color3): string
+-- Utility to hex string
+local function color3ToHex(c)
     return string.format("#%02X%02X%02X", math.round(c.R * 255), math.round(c.G * 255), math.round(c.B * 255))
 end
 
 -- Utility: hex string to Color3
-local function hexToColor3(hex: string): Color3?
+local function hexToColor3(hex)
     hex = hex:gsub("#", "")
     if #hex ~= 6 then return nil end
     local r = tonumber(hex:sub(1, 2), 16)
@@ -926,10 +917,10 @@ local function hexToColor3(hex: string): Color3?
     return Color3.fromRGB(r, g, b)
 end
 
-function ColorPicker.new(parent: Frame, config: { Name: string, Default: Color3?, Callback: ((Color3) -> ())? })
+function ColorPicker.new(parent, config)
     local self = setmetatable({}, ColorPicker)
 
-    self._connections = {} :: { RBXScriptConnection }
+    self._connections = {}
     self._callback = config.Callback
     self._panelOpen = false
     self._draggingSV = false
@@ -1448,15 +1439,15 @@ function ColorPicker:_closePanel()
     self._panel.Visible = false
 end
 
-function ColorPicker:GetColor(): Color3
+function ColorPicker:GetColor()
     return self._currentColor
 end
 
-function ColorPicker:GetValue(): Color3
+function ColorPicker:GetValue()
     return self:GetColor()
 end
 
-function ColorPicker:SetColor(color: Color3)
+function ColorPicker:SetColor(color)
     local h, s, v = color:ToHSV()
     self._hue = h
     self._sat = s
@@ -1484,7 +1475,7 @@ function ColorPicker:SetColor(color: Color3)
     end
 end
 
-function ColorPicker:SetValue(color: Color3)
+function ColorPicker:SetValue(color)
     self:SetColor(color)
 end
 
@@ -1517,10 +1508,10 @@ local Theme = _M["Theme"]
 local Divider = {}
 Divider.__index = Divider
 
-function Divider.new(parent: Frame, config: { Margin: number? }?)
+function Divider.new(parent, config: { Margin? }?)
     local self = setmetatable({}, Divider)
 
-    local margin: number = if config and config.Margin ~= nil then config.Margin else Theme.Spacing.Small
+    local margin = (config and config.Margin ~= nil) and config.Margin or Theme.Spacing.Small
 
     -- Wrapper frame that provides vertical margin via padding
     local wrapper = Theme.Create("Frame", {
@@ -1591,10 +1582,10 @@ local OPTION_HEIGHT = 20
 local ARROW_CHAR = "▼"
 local ARROW_UP_CHAR = "▲"
 
-function Dropdown.new(parent: Frame, config: {
-    Name: string,
+function Dropdown.new(parent, config: {
+    Name,
     Options: {string},
-    Default: string?,
+    Default?,
     Callback: ((string) -> ())?
 })
     local self = setmetatable({}, Dropdown)
@@ -1737,7 +1728,7 @@ function Dropdown.new(parent: Frame, config: {
             Text = option,
             Font = Theme.Font.Family,
             TextSize = Theme.Font.SizeSmall,
-            TextColor3 = if option == self._value then Theme.Colors.Accent else Theme.Colors.Text,
+            TextColor3 = (option == self._value) and Theme.Colors.Accent or Theme.Colors.Text,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Center,
             TextTruncate = Enum.TextTruncate.AtEnd,
@@ -1878,7 +1869,7 @@ function Dropdown:_updateOptionHighlights()
     end
 end
 
-function Dropdown:SetValue(value: string)
+function Dropdown:SetValue(value)
     -- Validate option exists
     local found = false
     for _, opt in ipairs(self._options) do
@@ -1898,7 +1889,7 @@ function Dropdown:SetValue(value: string)
     end
 end
 
-function Dropdown:GetValue(): string
+function Dropdown:GetValue()
     return self._value
 end
 
@@ -1942,7 +1933,7 @@ local Keybind = {}
 Keybind.__index = Keybind
 
 -- Map of KeyCode enum values to short display names
-local KEY_DISPLAY_NAMES: {[Enum.KeyCode]: string} = {
+local KEY_DISPLAY_NAMES = {
     [Enum.KeyCode.LeftShift] = "LShift",
     [Enum.KeyCode.RightShift] = "RShift",
     [Enum.KeyCode.LeftControl] = "LCtrl",
@@ -1970,7 +1961,7 @@ local KEY_DISPLAY_NAMES: {[Enum.KeyCode]: string} = {
     [Enum.KeyCode.Equals] = "=",
     [Enum.KeyCode.LeftBracket] = "[",
     [Enum.KeyCode.RightBracket] = "]",
-    [Enum.KeyCode.Backslash] = "\\",
+    [Enum.KeyCode.BackSlash] = "\\",
     [Enum.KeyCode.Semicolon] = ";",
     [Enum.KeyCode.Quote] = "'",
     [Enum.KeyCode.Comma] = ",",
@@ -1978,7 +1969,7 @@ local KEY_DISPLAY_NAMES: {[Enum.KeyCode]: string} = {
     [Enum.KeyCode.Slash] = "/",
 }
 
-local function getKeyDisplayName(keyCode: Enum.KeyCode?): string
+local function getKeyDisplayName(keyCode: Enum.KeyCode?)
     if keyCode == nil then
         return "None"
     end
@@ -1993,11 +1984,7 @@ local function getKeyDisplayName(keyCode: Enum.KeyCode?): string
     return name
 end
 
-function Keybind.new(parent: Frame, config: {
-    Name: string,
-    Default: Enum.KeyCode?,
-    Callback: ((Enum.KeyCode?) -> ())?
-})
+function Keybind.new(parent, config)
     local self = setmetatable({}, Keybind)
 
     self._value = config.Default -- nil means "None"
@@ -2187,7 +2174,7 @@ local TYPE_CONFIG = {
 }
 
 -- Deferred color init (Theme must be loaded)
-local function getTypeConfig(typeName: string)
+local function getTypeConfig(typeName)
     -- Lazily initialize colors from Theme
     if TYPE_CONFIG.Success.Color == nil then
         TYPE_CONFIG.Success.Color = Theme.Colors.Success
@@ -2201,8 +2188,8 @@ end
 function NotificationManager.new(screenGui: ScreenGui)
     local self = setmetatable({}, NotificationManager)
 
-    self._notifications = {} :: { { Frame: Frame, CleanupFn: () -> () } }
-    self._connections = {} :: { RBXScriptConnection }
+    self._notifications = {} }
+    self._connections = {}
 
     -- Container anchored top-right
     local container = Theme.Create("Frame", {
@@ -2234,7 +2221,7 @@ function NotificationManager.new(screenGui: ScreenGui)
     return self
 end
 
-function NotificationManager:Notify(config: { Message: string, Type: ("Success" | "Error" | "Warning" | "Info")?, Duration: number? })
+function NotificationManager:Notify(config)
     local rawType = config.Type or "Info"
     local typeName = rawType:sub(1, 1):upper() .. rawType:sub(2):lower()
     local duration = config.Duration or 3
@@ -2387,10 +2374,10 @@ local Theme = _M["Theme"]
 local SearchInput = {}
 SearchInput.__index = SearchInput
 
-function SearchInput.new(parent: Frame, config: { Placeholder: string?, Callback: ((string) -> ())? }?)
+function SearchInput.new(parent, config: { Placeholder?, Callback: ((string) -> ())? }?)
     local self = setmetatable({}, SearchInput)
 
-    self._connections = {} :: { RBXScriptConnection }
+    self._connections = {}
     self._callback = config and config.Callback or nil
     local placeholder = (config and config.Placeholder) or "Search..."
 
@@ -2511,11 +2498,11 @@ function SearchInput.new(parent: Frame, config: { Placeholder: string?, Callback
     return self
 end
 
-function SearchInput:GetText(): string
+function SearchInput:GetText()
     return self._textBox.Text
 end
 
-function SearchInput:SetText(text: string)
+function SearchInput:SetText(text)
     self._textBox.Text = text
 end
 
@@ -2569,15 +2556,7 @@ local Theme = _M["Theme"]
 local Slider = {}
 Slider.__index = Slider
 
-function Slider.new(parent: Frame, config: {
-    Name: string,
-    Min: number,
-    Max: number,
-    Default: number?,
-    Step: number?,
-    Suffix: string?,
-    Callback: ((number) -> ())?
-})
+function Slider.new(parent, config)
     local self = setmetatable({}, Slider)
 
     self._min = config.Min
@@ -2719,14 +2698,14 @@ function Slider.new(parent: Frame, config: {
     return self
 end
 
-function Slider:_snapToStep(value: number): number
+function Slider:_snapToStep(value)
     if self._step <= 0 then return value end
     local steps = math.round((value - self._min) / self._step)
     local snapped = self._min + steps * self._step
     return math.clamp(snapped, self._min, self._max)
 end
 
-function Slider:_formatValue(value: number): string
+function Slider:_formatValue(value)
     -- Show integer if step is integer, otherwise show decimal
     if self._step >= 1 and self._step == math.floor(self._step) then
         return tostring(math.floor(value + 0.5)) .. self._suffix
@@ -2744,7 +2723,7 @@ end
 
 function Slider:_updateVisuals()
     local range = self._max - self._min
-    local alpha = if range > 0 then (self._value - self._min) / range else 0
+    local alpha = (range > 0) and ((self._value - self._min) / range) or 0
 
     local trackAbsWidth = self._track.AbsoluteSize.X
     if trackAbsWidth <= 0 then
@@ -2783,7 +2762,7 @@ function Slider:_updateFromMouse()
     end
 end
 
-function Slider:SetValue(value: number)
+function Slider:SetValue(value)
     local clamped = math.clamp(value, self._min, self._max)
     local snapped = self:_snapToStep(clamped)
     if snapped == self._value then return end
@@ -2794,7 +2773,7 @@ function Slider:SetValue(value: number)
     end
 end
 
-function Slider:GetValue(): number
+function Slider:GetValue()
     return self._value
 end
 
@@ -2836,13 +2815,7 @@ local Theme = _M["Theme"]
 local TextInput = {}
 TextInput.__index = TextInput
 
-function TextInput.new(parent: Frame, config: {
-    Name: string,
-    Default: string?,
-    Placeholder: string?,
-    Callback: ((string) -> ())?,
-    Width: number?
-})
+function TextInput.new(parent, config)
     local self = setmetatable({}, TextInput)
 
     self._value = config.Default or ""
@@ -2971,7 +2944,7 @@ function TextInput.new(parent: Frame, config: {
     return self
 end
 
-function TextInput:SetValue(text: string)
+function TextInput:SetValue(text)
     self._value = text
     self._textBox.Text = text
     if self._callback then
@@ -2979,7 +2952,7 @@ function TextInput:SetValue(text: string)
     end
 end
 
-function TextInput:GetValue(): string
+function TextInput:GetValue()
     return self._value
 end
 
@@ -3020,15 +2993,10 @@ local Theme = _M["Theme"]
 local Toggle = {}
 Toggle.__index = Toggle
 
-function Toggle.new(parent: Frame, config: {
-    Name: string,
-    Default: boolean?,
-    Description: string?,
-    Callback: ((boolean) -> ())?
-})
+function Toggle.new(parent, config)
     local self = setmetatable({}, Toggle)
 
-    self._value = if config.Default ~= nil then config.Default else false
+    self._value = (config.Default ~= nil) and config.Default or false
     self._callback = config.Callback
     self._connections = {}
 
@@ -3148,7 +3116,7 @@ function Toggle.new(parent: Frame, config: {
     return self
 end
 
-function Toggle:_applyVisualState(animate: boolean?)
+function Toggle:_applyVisualState(animate?)
     local shouldAnimate = animate ~= false
 
     if self._value then
@@ -3184,7 +3152,7 @@ function Toggle:_applyVisualState(animate: boolean?)
     end
 end
 
-function Toggle:SetValue(value: boolean)
+function Toggle:SetValue(value)
     if self._value == value then return end
     self._value = value
     self:_applyVisualState(true)
@@ -3193,7 +3161,7 @@ function Toggle:SetValue(value: boolean)
     end
 end
 
-function Toggle:GetValue(): boolean
+function Toggle:GetValue()
     return self._value
 end
 
@@ -3266,7 +3234,7 @@ local ARM_LENGTH     = 10  -- arm reach in px at scale 1
 -- Helpers
 --------------------------------------------------------------------------------
 
-local function healthColor(pct: number): Color3
+local function healthColor(pct)
     if pct >= 60 then
         return Theme.Colors.Health
     elseif pct >= 30 then
@@ -3276,14 +3244,14 @@ local function healthColor(pct: number): Color3
     end
 end
 
-local function distanceFromScale(scale: number): number
+local function distanceFromScale(scale)
     -- Larger scale = closer = smaller distance
     return math.floor(10 + (1.0 - scale) * 80 + 0.5)
 end
 
 --- Create a thin line Frame between two pixel offsets relative to a common parent.
 --- (x1, y1) and (x2, y2) are pixel coordinates inside the parent.
-local function createLine(parent: Frame, x1: number, y1: number, x2: number, y2: number, color: Color3, transparency: number): Frame
+local function createLine(parent, x1, y1, x2, y2, color, transparency): Frame
     local dx = x2 - x1
     local dy = y2 - y1
     local length = math.sqrt(dx * dx + dy * dy)
@@ -3312,7 +3280,7 @@ end
 local ESPPreview = {}
 ESPPreview.__index = ESPPreview
 
-function ESPPreview.new(parent: Frame, config: {[string]: any}?)
+function ESPPreview.new(parent, config: {[string]: any}?)
     local self = setmetatable({}, ESPPreview)
 
     config = config or {}
@@ -3457,7 +3425,7 @@ function ESPPreview:_buildAllTargets()
     end
 end
 
-function ESPPreview:_buildTarget(index: number)
+function ESPPreview:_buildTarget(index)
     local data = DUMMY_TARGETS[index]
     local s = data.scale
 
@@ -3787,7 +3755,7 @@ end
 -- Public API
 --------------------------------------------------------------------------------
 
-function ESPPreview:Update(settings: {[string]: any})
+function ESPPreview:Update(settings)
     if not settings then return end
 
     for k, v in pairs(settings) do
@@ -3799,17 +3767,17 @@ function ESPPreview:Update(settings: {[string]: any})
     self:_applySettings()
 end
 
-function ESPPreview:SetTargetCount(n: number)
+function ESPPreview:SetTargetCount(n)
     self._settings.TargetCount = math.clamp(n, 1, 8)
     self:_applySettings()
 end
 
-function ESPPreview:SetAccentColor(color: Color3)
+function ESPPreview:SetAccentColor(color)
     self._settings.AccentColor = color
     self:_applySettings()
 end
 
-function ESPPreview:SetEnabled(enabled: boolean)
+function ESPPreview:SetEnabled(enabled)
     self.Frame.Visible = enabled
 end
 
@@ -3858,7 +3826,7 @@ local Theme = _M["Theme"]
 -- Helpers
 --------------------------------------------------------------------------------
 
-local function tween(instance: Instance, duration: number, props: {[string]: any}, style: Enum.EasingStyle?, dir: Enum.EasingDirection?)
+local function tween(instance, duration, props: {[string]: any}, style: Enum.EasingStyle?, dir: Enum.EasingDirection?)
     local info = TweenInfo.new(
         duration,
         style or Theme.Animation.EaseStyle,
@@ -3869,9 +3837,9 @@ local function tween(instance: Instance, duration: number, props: {[string]: any
     return t
 end
 
-local function setProps(instance: Instance, props: {[string]: any})
+local function setProps(instance, props)
     for k, v in pairs(props) do
-        (instance :: any)[k] = v
+        (instance)[k] = v
     end
 end
 
@@ -3883,12 +3851,12 @@ local Loader = {}
 Loader.__index = Loader
 
 export type LoaderConfig = {
-    Title: string?,
-    Version: string?,
-    KeyLength: number?,
-    VerifyCallback: ((key: string) -> (boolean, string?))?,
-    GetKeyURL: string?,
-    TestMode: boolean?,
+    Title?,
+    Version?,
+    KeyLength?,
+    VerifyCallback: ((key) -> (boolean, string?))?,
+    GetKeyURL?,
+    TestMode?,
     OnSuccess: (() -> ())?,
 }
 
@@ -3906,8 +3874,8 @@ function Loader.new(config: LoaderConfig)
 
     -- State
     self._verifying   = false
-    self._connections  = {} :: {RBXScriptConnection}
-    self._tweens       = {} :: {Tween}
+    self._connections  = {}
+    self._tweens       = {}
     self._destroyed    = false
 
     self:_build()
@@ -4387,7 +4355,7 @@ function Loader:_connect(signal: RBXScriptSignal, fn: (...any) -> ())
     return conn
 end
 
-function Loader:_trackTween(t: Tween)
+function Loader:_trackTween(t)
     table.insert(self._tweens, t)
     return t
 end
@@ -4542,7 +4510,7 @@ end
 -- Status helpers
 --------------------------------------------------------------------------------
 
-function Loader:_setStatus(text: string, color: Color3)
+function Loader:_setStatus(text, color)
     self._statusLabel.Text = text
     self._statusLabel.TextColor3 = color
 end
@@ -4664,7 +4632,7 @@ end
 -- Enable / disable controls
 --------------------------------------------------------------------------------
 
-function Loader:_setControlsEnabled(enabled: boolean)
+function Loader:_setControlsEnabled(enabled)
     self._textBox.TextEditable = enabled
     if enabled then
         self._unlockBtn.BackgroundColor3 = Theme.Colors.Accent
@@ -4848,7 +4816,7 @@ local SearchInput = _M["Components_SearchInput"]
 local Section = {}
 Section.__index = Section
 
-function Section.new(parent: Frame, config: any)
+function Section.new(parent, config: any)
     if type(config) == "string" then
         config = { Name = config }
     end
@@ -4856,10 +4824,10 @@ function Section.new(parent: Frame, config: any)
 
     local self = setmetatable({}, Section)
 
-    local collapsible: boolean = if config.Collapsible ~= nil then config.Collapsible else false
-    local isOpen: boolean = if config.DefaultOpen ~= nil then config.DefaultOpen else true
+    local collapsible = (config.Collapsible ~= nil) and config.Collapsible or false
+    local isOpen = (config.DefaultOpen ~= nil) and config.DefaultOpen or true
 
-    self._connections = {} :: { RBXScriptConnection }
+    self._connections = {}
     self._components = {}
     self._isOpen = isOpen
 
@@ -4882,14 +4850,14 @@ function Section.new(parent: Frame, config: any)
     })
 
     -- Toggle indicator (▾ / ▸)
-    local indicator: TextLabel? = nil
+    local indicator? = nil
     if collapsible then
         indicator = Theme.Create("TextLabel", {
             Name = "Indicator",
             Size = UDim2.new(0, 12, 1, 0),
             Position = UDim2.new(0, 0, 0, 0),
             BackgroundTransparency = 1,
-            Text = if isOpen then "▾" else "▸",
+            Text = isOpen and "▾" or "▸",
             TextColor3 = Theme.Colors.TextDim,
             Font = Theme.Font.Family,
             TextSize = Theme.Font.SizeSmall,
@@ -4901,7 +4869,7 @@ function Section.new(parent: Frame, config: any)
     end
 
     -- Title label
-    local titleOffset = if collapsible then 12 else 0
+    local titleOffset = collapsible and 12 or 0
     local title = Theme.Create("TextLabel", {
         Name = "Title",
         Size = UDim2.new(1, -titleOffset, 1, 0),
@@ -4985,13 +4953,13 @@ function Section:Toggle()
     self._isOpen = not self._isOpen
 
     if self._indicator then
-        self._indicator.Text = if self._isOpen then "▾" else "▸"
+        self._indicator.Text = self._isOpen and "▾" or "▸"
     end
 
     self.ContentFrame.Visible = self._isOpen
 end
 
-function Section:SetOpen(open: boolean)
+function Section:SetOpen(open)
     if self._isOpen ~= open then
         self:Toggle()
     end
@@ -5222,7 +5190,7 @@ function Tab.new(window, config)
     return self
 end
 
-function Tab:_setSelected(selected: boolean)
+function Tab:_setSelected(selected)
     if selected then
         self._indicator.Visible = true
         self._button.BackgroundTransparency = 0
