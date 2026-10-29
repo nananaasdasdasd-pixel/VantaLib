@@ -6109,27 +6109,106 @@ end
 return Window
 end
 
--- ===== User-provided example UI =====
-local CSGOLib = __require("init")
+-- ===== Auto-run showcase UI =====
+local Players = game:GetService("Players")
+local Library = __require("init")
 
-local Window = CSGOLib:CreateWindow({
+local Window = Library:CreateWindow({
     Title = "GAMESNEEZE",
     Version = "2.4.1",
     Theme = "CSGO",
     ToggleKey = Enum.KeyCode.RightShift,
+
+    -- Key Loader Configuration
     Authentication = {
-        Enabled = true,
-        TestMode = true, -- Demo only; use VerifyCallback for real authentication.
+        Enabled = true,                -- Show the classic CS:GO key loader first
+        Title = "GAMESNEEZE",
+        Version = "2.4.1",
+        TestMode = true,               -- Accepts any key in development mode
         GetKeyURL = "https://discord.gg/example",
+        VerifyCallback = function(enteredKey: string)
+            -- Production example: Verify key against your HTTP verification endpoint
+            -- In TestMode = true, this is bypassed with a simulated 1-second delay.
+            -- Real implementation:
+            -- local res = HttpService:RequestAsync({ Url = "https://api.example.com/verify?key=" .. enteredKey })
+            -- return res.Success and res.Body == "VALID", "Key has expired or is invalid"
+            return true, nil
+        end,
     },
 })
 
--- Create tabs
-local ESPTab = Window:CreateTab("ESP")
-local CombatTab = Window:CreateTab("Combat")
+local ConfigManager = Library:GetConfig()
 
--- Create ESP preview simulator
-local Preview = ESPTab:CreateESPPreview({
+--------------------------------------------------------------------------------
+-- 2. HOME TAB
+--------------------------------------------------------------------------------
+
+local HomeTab = Window:CreateTab({
+    Name = "Home",
+    Icon = "⌂",
+    LayoutOrder = 1,
+})
+
+local WelcomeSection = HomeTab:CreateSection({
+    Name = "System Overview",
+    Collapsible = false,
+})
+
+WelcomeSection:CreateButton({
+    Name = "Join Community Discord",
+    Description = "Copies official Discord link to clipboard",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://discord.gg/example")
+        end
+        Library:Notify({
+            Message = "Discord invite copied to clipboard!",
+            Type = "Success",
+            Duration = 3,
+        })
+    end,
+})
+
+WelcomeSection:CreateDivider()
+
+local ChangelogSection = HomeTab:CreateSection({
+    Name = "Changelog v2.4.1",
+    Collapsible = true,
+    DefaultOpen = true,
+})
+
+ChangelogSection:CreateButton({
+    Name = "[+] Added 2D ESP Viewport Simulator",
+    Callback = function() end,
+})
+
+ChangelogSection:CreateButton({
+    Name = "[+] Added Square CS:GO Key Authentication",
+    Callback = function() end,
+})
+
+ChangelogSection:CreateButton({
+    Name = "[*] Optimized Bounding Box & Skeleton rendering",
+    Callback = function() end,
+})
+
+ChangelogSection:CreateButton({
+    Name = "[*] Refactored Config JSON serialization",
+    Callback = function() end,
+})
+
+--------------------------------------------------------------------------------
+-- 3. ESP TAB & DEDICATED PREVIEW SIMULATOR
+--------------------------------------------------------------------------------
+
+local ESPTab = Window:CreateTab({
+    Name = "ESP",
+    Icon = "👁",
+    LayoutOrder = 2,
+})
+
+-- Instantiate the dedicated ESP Preview viewport in the right panel of this tab
+local ESPPreview = ESPTab:CreateESPPreview({
     ShowBoxes = true,
     ShowNames = true,
     ShowHealth = true,
@@ -6140,34 +6219,454 @@ local Preview = ESPTab:CreateESPPreview({
     AccentColor = Color3.fromRGB(220, 150, 40),
 })
 
--- Create sections and controls
-local Section = ESPTab:CreateSection("ESP Preview")
+local PreviewControls = ESPTab:CreateSection({
+    Name = "ESP Preview Simulator",
+    Collapsible = false,
+})
 
-Section:CreateToggle({
+PreviewControls:CreateToggle({
     Name = "Bounding Boxes",
     Default = true,
+    Description = "Draw rectangular tactical outline around targets",
     Callback = function(val)
-        Preview:Update({ ShowBoxes = val })
+        ESPPreview:Update({ ShowBoxes = val })
     end,
 })
 
-Section:CreateSlider({
-    Name = "Preview Targets",
+PreviewControls:CreateToggle({
+    Name = "Player Names",
+    Default = true,
+    Description = "Render callout labels above targets",
+    Callback = function(val)
+        ESPPreview:Update({ ShowNames = val })
+    end,
+})
+
+PreviewControls:CreateToggle({
+    Name = "Health Bars",
+    Default = true,
+    Description = "Dynamic green/yellow/red vertical health meters",
+    Callback = function(val)
+        ESPPreview:Update({ ShowHealth = val })
+    end,
+})
+
+PreviewControls:CreateToggle({
+    Name = "Distance Labels",
+    Default = true,
+    Description = "Display simulated meter distance beneath feet",
+    Callback = function(val)
+        ESPPreview:Update({ ShowDistance = val })
+    end,
+})
+
+PreviewControls:CreateToggle({
+    Name = "Skeleton Lines",
+    Default = true,
+    Description = "Anatomical bone structure connectivity lines",
+    Callback = function(val)
+        ESPPreview:Update({ ShowSkeleton = val })
+    end,
+})
+
+PreviewControls:CreateToggle({
+    Name = "Weapon Icons & Names",
+    Default = true,
+    Description = "Display current primary/secondary firearm",
+    Callback = function(val)
+        ESPPreview:Update({ ShowWeapons = val })
+    end,
+})
+
+PreviewControls:CreateSlider({
+    Name = "Simulated Targets",
     Min = 1,
     Max = 8,
     Default = 3,
     Step = 1,
+    Suffix = " bots",
     Callback = function(val)
-        Preview:SetTargetCount(val)
+        ESPPreview:SetTargetCount(val)
     end,
 })
 
-Section:CreateColorPicker({
-    Name = "Box Color",
+PreviewControls:CreateColorPicker({
+    Name = "Box Accent Color",
     Default = Color3.fromRGB(220, 150, 40),
     Callback = function(color)
-        Preview:SetAccentColor(color)
+        ESPPreview:SetAccentColor(color)
     end,
 })
 
-return CSGOLib
+local WorldESPSection = ESPTab:CreateSection({
+    Name = "World & Dropped Items",
+    Collapsible = true,
+    DefaultOpen = false,
+})
+
+WorldESPSection:CreateToggle({
+    Name = "Dropped Weapons",
+    Default = false,
+    Callback = function(val)
+        Library:Notify({
+            Message = "Dropped Weapons ESP: " .. (val and "ON" or "OFF"),
+            Type = "Info",
+            Duration = 2,
+        })
+    end,
+})
+
+WorldESPSection:CreateToggle({
+    Name = "Defuse Kits / Objectives",
+    Default = true,
+    Callback = function() end,
+})
+
+WorldESPSection:CreateSlider({
+    Name = "Max Render Distance",
+    Min = 50,
+    Max = 1000,
+    Default = 300,
+    Step = 25,
+    Suffix = "m",
+    Callback = function() end,
+})
+
+--------------------------------------------------------------------------------
+-- 4. COMBAT TAB
+--------------------------------------------------------------------------------
+
+local CombatTab = Window:CreateTab({
+    Name = "Combat",
+    Icon = "⊕",
+    LayoutOrder = 3,
+})
+
+local AimbotSection = CombatTab:CreateSection({
+    Name = "Aimbot Configuration",
+    Collapsible = false,
+})
+
+AimbotSection:CreateToggle({
+    Name = "Master Aimbot",
+    Default = false,
+    Description = "Enable tactical aim assistance",
+    Callback = function(val)
+        Library:Notify({
+            Message = "Aimbot: " .. (val and "ENABLED" or "DISABLED"),
+            Type = val and "Success" or "Warning",
+            Duration = 2,
+        })
+    end,
+})
+
+AimbotSection:CreateKeybind({
+    Name = "Aimbot Activation Key",
+    Default = Enum.KeyCode.F,
+    Callback = function(key)
+        Library:Notify({
+            Message = "Aim key rebound to: " .. (key and key.Name or "None"),
+            Type = "Info",
+            Duration = 2,
+        })
+    end,
+})
+
+AimbotSection:CreateDropdown({
+    Name = "Target Hitbox",
+    Options = {"Head", "Neck", "Upper Chest", "Pelvis", "Closest Bone"},
+    Default = "Head",
+    Callback = function(choice)
+        Library:Notify({
+            Message = "Target Hitbox set to: " .. choice,
+            Type = "Info",
+            Duration = 2,
+        })
+    end,
+})
+
+AimbotSection:CreateSlider({
+    Name = "Field of View (FOV)",
+    Min = 10,
+    Max = 360,
+    Default = 90,
+    Step = 5,
+    Suffix = "°",
+    Callback = function() end,
+})
+
+AimbotSection:CreateSlider({
+    Name = "Aim Smoothness",
+    Min = 1,
+    Max = 20,
+    Default = 5,
+    Step = 1,
+    Callback = function() end,
+})
+
+local TriggerbotSection = CombatTab:CreateSection({
+    Name = "Triggerbot",
+    Collapsible = true,
+    DefaultOpen = false,
+})
+
+TriggerbotSection:CreateToggle({
+    Name = "Auto Fire on Crosshair",
+    Default = false,
+    Callback = function() end,
+})
+
+TriggerbotSection:CreateSlider({
+    Name = "Reaction Delay",
+    Min = 0,
+    Max = 300,
+    Default = 35,
+    Step = 5,
+    Suffix = "ms",
+    Callback = function() end,
+})
+
+--------------------------------------------------------------------------------
+-- 5. MOVEMENT TAB
+--------------------------------------------------------------------------------
+
+local MovementTab = Window:CreateTab({
+    Name = "Movement",
+    Icon = "⚡",
+    LayoutOrder = 4,
+})
+
+local BhopSection = MovementTab:CreateSection({
+    Name = "Locomotion & Bunnyhop",
+    Collapsible = false,
+})
+
+BhopSection:CreateToggle({
+    Name = "Auto Bunnyhop",
+    Default = true,
+    Description = "Automatically jumps on touching ground",
+    Callback = function(val)
+        Library:Notify({
+            Message = "Bunnyhop: " .. (val and "ACTIVE" or "OFF"),
+            Type = "Info",
+            Duration = 2,
+        })
+    end,
+})
+
+BhopSection:CreateToggle({
+    Name = "Air Strafe Helper",
+    Default = false,
+    Description = "Optimizes rotational velocity in air",
+    Callback = function() end,
+})
+
+BhopSection:CreateSlider({
+    Name = "WalkSpeed Modifier",
+    Min = 16,
+    Max = 120,
+    Default = 16,
+    Step = 2,
+    Suffix = " sps",
+    Callback = function(speed)
+        local character = Players.LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = speed
+        end
+    end,
+})
+
+BhopSection:CreateKeybind({
+    Name = "Air Freeze Key",
+    Default = Enum.KeyCode.Z,
+    Callback = function() end,
+})
+
+--------------------------------------------------------------------------------
+-- 6. MISC TAB
+--------------------------------------------------------------------------------
+
+local MiscTab = Window:CreateTab({
+    Name = "Misc",
+    Icon = "⚙",
+    LayoutOrder = 5,
+})
+
+local VisualMiscSection = MiscTab:CreateSection({
+    Name = "Visual Customization",
+    Collapsible = false,
+})
+
+VisualMiscSection:CreateToggle({
+    Name = "Sniper Crosshair",
+    Default = true,
+    Description = "Render persistent tactical crosshair",
+    Callback = function() end,
+})
+
+VisualMiscSection:CreateColorPicker({
+    Name = "Crosshair Accent",
+    Default = Color3.fromRGB(72, 175, 72),
+    Callback = function(c)
+        Library:Notify({
+            Message = string.format("Crosshair color updated to RGB(%d, %d, %d)", c.R*255, c.G*255, c.B*255),
+            Type = "Info",
+            Duration = 2,
+        })
+    end,
+})
+
+VisualMiscSection:CreateDivider()
+
+local UtilitySection = MiscTab:CreateSection({
+    Name = "Game Utilities",
+    Collapsible = true,
+    DefaultOpen = true,
+})
+
+UtilitySection:CreateTextInput({
+    Name = "Custom Clan Tag",
+    Default = "GAMESNEEZE",
+    Placeholder = "Enter 4-10 char tag...",
+    Callback = function(tag)
+        Library:Notify({
+            Message = "Clan tag set to: [" .. tag .. "]",
+            Type = "Success",
+            Duration = 2,
+        })
+    end,
+})
+
+UtilitySection:CreateToggle({
+    Name = "Watermark Overlay",
+    Default = true,
+    Callback = function() end,
+})
+
+--------------------------------------------------------------------------------
+-- 7. SETTINGS TAB
+--------------------------------------------------------------------------------
+
+local SettingsTab = Window:CreateTab({
+    Name = "Settings",
+    Icon = "🛠",
+    LayoutOrder = 6,
+})
+
+local UISettingsSection = SettingsTab:CreateSection({
+    Name = "Menu Configuration",
+    Collapsible = false,
+})
+
+UISettingsSection:CreateKeybind({
+    Name = "Menu Toggle Key",
+    Default = Enum.KeyCode.RightShift,
+    Callback = function(key)
+        if key then
+            Library:Notify({
+                Message = "Menu Toggle Key updated to: " .. key.Name,
+                Type = "Success",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+UISettingsSection:CreateButton({
+    Name = "Unload / Destroy Interface",
+    Description = "Safely disconnects all hooks and removes ScreenGuis",
+    Callback = function()
+        Library:Notify({
+            Message = "Unloading CSGOLib...",
+            Type = "Warning",
+            Duration = 1.5,
+        })
+        task.wait(1.5)
+        Library:Destroy()
+    end,
+})
+
+--------------------------------------------------------------------------------
+-- 8. CONFIGS TAB (PERSISTENCE SYSTEM)
+--------------------------------------------------------------------------------
+
+local ConfigsTab = Window:CreateTab({
+    Name = "Configs",
+    Icon = "💾",
+    LayoutOrder = 7,
+})
+
+local PresetsSection = ConfigsTab:CreateSection({
+    Name = "Profile & Preset Management",
+    Collapsible = false,
+})
+
+local configNameInput = "default"
+
+PresetsSection:CreateTextInput({
+    Name = "Profile Name",
+    Default = "legit_csgo",
+    Placeholder = "config_name",
+    Callback = function(text)
+        configNameInput = text
+    end,
+})
+
+PresetsSection:CreateButton({
+    Name = "Save Profile",
+    Description = "Serialize all current control states into storage",
+    Callback = function()
+        local ok, err = ConfigManager:Save(configNameInput)
+        if ok then
+            Library:Notify({
+                Message = "Configuration '" .. configNameInput .. "' saved successfully!",
+                Type = "Success",
+                Duration = 3,
+            })
+        else
+            Library:Notify({
+                Message = "Failed to save: " .. tostring(err),
+                Type = "Error",
+                Duration = 4,
+            })
+        end
+    end,
+})
+
+PresetsSection:CreateButton({
+    Name = "Load Profile",
+    Description = "Restore states from saved preset",
+    Callback = function()
+        local ok, err = ConfigManager:Load(configNameInput)
+        if ok then
+            Library:Notify({
+                Message = "Configuration '" .. configNameInput .. "' loaded!",
+                Type = "Success",
+                Duration = 3,
+            })
+        else
+            Library:Notify({
+                Message = "Load error: " .. tostring(err),
+                Type = "Error",
+                Duration = 4,
+            })
+        end
+    end,
+})
+
+PresetsSection:CreateButton({
+    Name = "Reset Defaults",
+    Description = "Reset all controls back to stock factory settings",
+    Callback = function()
+        ConfigManager:ResetDefaults()
+        Library:Notify({
+            Message = "All options reset to default values.",
+            Type = "Warning",
+            Duration = 3,
+        })
+    end,
+})
+
+print("[CSGOLib] Successfully loaded Gamesneeze CS:GO Square Tactical UI.")
+
+return Library
